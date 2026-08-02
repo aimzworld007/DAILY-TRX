@@ -25,7 +25,7 @@ export interface DailySummary {
   net_income: number;        // Gross Profit - Expenses
   petty_cash: {
     pre_balance: number;
-    new_balance: number;     // Pre Balance - Expenses
+    new_balance: number;     // Pre Balance + Total Amount (net income)
   };
   bank_balance: {
     current_balance: number;
@@ -69,7 +69,7 @@ export function calculateLineProfit(item: {
  * - Total Costs = Amer Cost + Pay Card + PORTAL
  * - Gross Profit = Revenue - Total Costs
  * - Net Income = Gross Profit - Daily Expense
- * - Petty Cash New Balance = Pre Balance - Daily Expense
+ * - Petty Cash New Balance = Pre Balance + Total Amount (Net Income)
  * - Net Balance = Current Bank Balance - Petty Cash New Balance
  */
 export function calculateFinancials(
@@ -111,7 +111,7 @@ export function calculateFinancials(
   const validBankBalance = Number(currentBankBalance) || 0;
 
   const net_income = gross_profit - validExpenses;
-  const petty_new_balance = validPreBalance - validExpenses;
+  const petty_new_balance = validPreBalance + net_income;
   const bank_net_balance = validBankBalance - petty_new_balance;
 
   return {
@@ -178,7 +178,7 @@ export function calculateDailySummary(
   const validPre = Number(preBalance) || 0;
   const validBank = Number(currentBankBalance) || 0;
   const net_income = totals.gross_profit - validExpenses;
-  const new_balance = validPre - validExpenses;
+  const new_balance = validPre + net_income;
   const net_balance = validBank - new_balance;
 
   return {
@@ -194,4 +194,3 @@ export function calculateDailySummary(
     },
   };
 }
-

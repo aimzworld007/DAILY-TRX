@@ -20,13 +20,16 @@ import { SidebarNav } from "@/components/SidebarNav";
 import { SummaryCards } from "@/components/SummaryCards";
 import { TransactionTable } from "@/components/TransactionTable";
 import { ReconciliationPanel } from "@/components/ReconciliationPanel";
-import { HistoryModal } from "@/components/HistoryModal";
 import { PrintReportModal } from "@/components/PrintReportModal";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function HabatAlRimalDailyTraxPage() {
   // 1. Current Selected Date (default: today YYYY-MM-DD)
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    if (typeof window === "undefined") return getTodayDateString();
+    const requestedDate = new URLSearchParams(window.location.search).get("date");
+    return requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : getTodayDateString();
+  });
 
   // 2. Core Financial State
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
@@ -37,7 +40,6 @@ export default function HabatAlRimalDailyTraxPage() {
   // 3. UI & Modal states
   const [syncStatus, setSyncStatus] = useState<"saved" | "saving" | "error" | "offline">("saved");
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
-  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [isPrintOpen, setIsPrintOpen] = useState<boolean>(false);
   const [notification, setNotification] = useState<{
     type: "success" | "error";
@@ -358,17 +360,9 @@ export default function HabatAlRimalDailyTraxPage() {
     document.body.removeChild(link);
   };
 
-  // 10. Open Archive History Modal
-  const handleOpenHistory = () => {
-    setIsHistoryOpen(true);
-  };
-
   return (
     <div className="min-h-screen text-slate-900 font-sans antialiased lg:pl-56">
-      <SidebarNav
-        onOpenHistory={handleOpenHistory}
-        onOpenPrint={() => setIsPrintOpen(true)}
-      />
+      <SidebarNav />
       {/* 1. TOP STICKY HEADER & TOOLBAR */}
       <HeaderNav
         selectedDate={selectedDate}
@@ -443,17 +437,6 @@ export default function HabatAlRimalDailyTraxPage() {
           />
         </div>
       </main>
-
-      {/* 3. ARCHIVE HISTORY MODAL */}
-      <HistoryModal
-        isOpen={isHistoryOpen}
-        onClose={() => setIsHistoryOpen(false)}
-        onSelectDate={(dateStr) => {
-          setSelectedDate(dateStr);
-          setIsHistoryOpen(false);
-        }}
-        currentDate={selectedDate}
-      />
 
       {/* 4. FORMAL PRINT REPORT MODAL */}
       <PrintReportModal

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   LineItem,
   DailyRecord,
@@ -46,6 +46,13 @@ export default function HabatAlRimalDailyTraxPage() {
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [hydratedDate, setHydratedDate] = useState<string | null>(null);
+  const loadRequestRef = useRef(0);
+  const editVersionRef = useRef(0);
+
+  const markEdited = useCallback(() => {
+    editVersionRef.current += 1;
+  }, []);
 
   // 4. Calculate real-time financial formulas & totals
   const totals: DailyTotals = useMemo(
@@ -73,17 +80,34 @@ export default function HabatAlRimalDailyTraxPage() {
 
   // 5. Load Record for Selected Date (from Firestore or fallback to localStorage)
   const loadRecordForDate = useCallback(async (dateStr: string) => {
+    const requestId = ++loadRequestRef.current;
+    const editVersionAtStart = editVersionRef.current;
+    setHydratedDate(null);
+
+    const canApplyLoadedRecord = () =>
+      requestId === loadRequestRef.current &&
+      editVersionAtStart === editVersionRef.current;
+
+    const finishLoading = () => {
+      if (requestId === loadRequestRef.current) {
+        setHydratedDate(dateStr);
+      }
+    };
+
     try {
       setSyncStatus("saving");
       const remoteRecord = await getDailyRecord(dateStr);
 
       if (remoteRecord) {
-        setLineItems(remoteRecord.line_items || []);
-        setExpenses(remoteRecord.summary?.expenses || 0);
-        setPreBalance(remoteRecord.summary?.petty_cash?.pre_balance ?? 0);
-        setCurrentBankBalance(
-          remoteRecord.summary?.bank_balance?.current_balance ?? 0
-        );
+        if (canApplyLoadedRecord()) {
+          setLineItems(remoteRecord.line_items || []);
+          setExpenses(remoteRecord.summary?.expenses || 0);
+          setPreBalance(remoteRecord.summary?.petty_cash?.pre_balance ?? 0);
+          setCurrentBankBalance(
+            remoteRecord.summary?.bank_balance?.current_balance ?? 0
+          );
+        }
+        finishLoading();
         setSyncStatus("saved");
         return;
       }
@@ -94,12 +118,15 @@ export default function HabatAlRimalDailyTraxPage() {
       if (cached) {
         try {
           const parsed: DailyRecord = JSON.parse(cached);
-          setLineItems(parsed.line_items || []);
-          setExpenses(parsed.summary?.expenses || 0);
-          setPreBalance(parsed.summary?.petty_cash?.pre_balance ?? 0);
-          setCurrentBankBalance(
-            parsed.summary?.bank_balance?.current_balance ?? 0
-          );
+          if (canApplyLoadedRecord()) {
+            setLineItems(parsed.line_items || []);
+            setExpenses(parsed.summary?.expenses || 0);
+            setPreBalance(parsed.summary?.petty_cash?.pre_balance ?? 0);
+            setCurrentBankBalance(
+              parsed.summary?.bank_balance?.current_balance ?? 0
+            );
+          }
+          finishLoading();
           setSyncStatus("saved");
           return;
         } catch {
@@ -108,10 +135,13 @@ export default function HabatAlRimalDailyTraxPage() {
       }
 
       // Otherwise initialize a fresh day; transactions are added through the popup.
-      setLineItems([]);
-      setExpenses(0);
-      setPreBalance(1200);
-      setCurrentBankBalance(0);
+      if (canApplyLoadedRecord()) {
+        setLineItems([]);
+        setExpenses(0);
+        setPreBalance(0);
+        setCurrentBankBalance(0);
+      }
+      finishLoading();
       setSyncStatus("saved");
     } catch (error) {
       console.warn("Firestore offline or inaccessible, switching to Local Mode:", error);
@@ -122,21 +152,27 @@ export default function HabatAlRimalDailyTraxPage() {
       if (cached) {
         try {
           const parsed: DailyRecord = JSON.parse(cached);
-          setLineItems(parsed.line_items || []);
-          setExpenses(parsed.summary?.expenses || 0);
-          setPreBalance(parsed.summary?.petty_cash?.pre_balance ?? 0);
-          setCurrentBankBalance(
-            parsed.summary?.bank_balance?.current_balance ?? 0
-          );
+          if (canApplyLoadedRecord()) {
+            setLineItems(parsed.line_items || []);
+            setExpenses(parsed.summary?.expenses || 0);
+            setPreBalance(parsed.summary?.petty_cash?.pre_balance ?? 0);
+            setCurrentBankBalance(
+              parsed.summary?.bank_balance?.current_balance ?? 0
+            );
+          }
+          finishLoading();
           return;
         } catch {
           // ignore
         }
       }
-      setLineItems([]);
-      setExpenses(0);
-      setPreBalance(1200);
-      setCurrentBankBalance(0);
+      if (canApplyLoadedRecord()) {
+        setLineItems([]);
+        setExpenses(0);
+        setPreBalance(0);
+        setCurrentBankBalance(0);
+      }
+      finishLoading();
     }
   }, []);
 
@@ -196,10 +232,12 @@ export default function HabatAlRimalDailyTraxPage() {
   // Debounced Auto-save when items change
   useEffect(() => {
     const timer = setTimeout(() => {
-      saveCurrentRecord(false);
+      if (hydratedDate === selectedDate) {
+        saveCurrentRecord(false);
+      }
     }, 1200);
     return () => clearTimeout(timer);
-  }, [lineItems, expenses, preBalance, currentBankBalance, saveCurrentRecord]);
+  }, [lineItems, expenses, preBalance, currentBankBalance, hydratedDate, selectedDate, saveCurrentRecord]);
 
   // Auto hide notification
   useEffect(() => {
@@ -213,6 +251,7 @@ export default function HabatAlRimalDailyTraxPage() {
   const handleAddRow = (
     transaction: Omit<LineItem, "id" | "sn" | "net_profit">
   ) => {
+    markEdited();
     const nextSN = lineItems.length + 1;
     const newRow = {
       ...createEmptyLineItem(nextSN),
@@ -228,6 +267,7 @@ export default function HabatAlRimalDailyTraxPage() {
   };
 
   const handleUpdateRow = (id: string, updates: Partial<LineItem>) => {
+    markEdited();
     setLineItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item;
@@ -250,6 +290,7 @@ export default function HabatAlRimalDailyTraxPage() {
   };
 
   const handleDeleteRow = (id: string) => {
+    markEdited();
     setLineItems((prev) => {
       const filtered = prev.filter((item) => item.id !== id);
       // re-index serial numbers
@@ -261,6 +302,7 @@ export default function HabatAlRimalDailyTraxPage() {
   };
 
   const handleDuplicateRow = (id: string) => {
+    markEdited();
     setLineItems((prev) => {
       const target = prev.find((item) => item.id === id);
       if (!target) return prev;
@@ -275,6 +317,7 @@ export default function HabatAlRimalDailyTraxPage() {
   };
 
   const handleMoveRow = (id: string, direction: "up" | "down") => {
+    markEdited();
     setLineItems((prev) => {
       const index = prev.findIndex((item) => item.id === id);
       if (index === -1) return prev;
@@ -294,6 +337,7 @@ export default function HabatAlRimalDailyTraxPage() {
   };
 
   const handleRenumberSn = () => {
+    markEdited();
     setLineItems((prev) =>
       prev.map((item, idx) => ({
         ...item,
@@ -308,6 +352,7 @@ export default function HabatAlRimalDailyTraxPage() {
         "Are you sure you want to clear all transactions for this day? This cannot be undone."
       )
     ) {
+      markEdited();
       setLineItems([]);
       setExpenses(0);
     }
@@ -411,7 +456,10 @@ export default function HabatAlRimalDailyTraxPage() {
           totals={totals}
           summary={summary}
           expenses={expenses}
-          onExpensesChange={(newExp) => setExpenses(newExp)}
+          onExpensesChange={(newExp) => {
+            markEdited();
+            setExpenses(newExp);
+          }}
         />
 
         <DailyCopySummary
@@ -440,8 +488,14 @@ export default function HabatAlRimalDailyTraxPage() {
         <div id="reconciliation" className="scroll-mt-24">
           <ReconciliationPanel
             summary={summary}
-            onPreBalanceChange={(val) => setPreBalance(val)}
-            onCurrentBankBalanceChange={(val) => setCurrentBankBalance(val)}
+            onPreBalanceChange={(val) => {
+              markEdited();
+              setPreBalance(val);
+            }}
+            onCurrentBankBalanceChange={(val) => {
+              markEdited();
+              setCurrentBankBalance(val);
+            }}
           />
         </div>
       </main>

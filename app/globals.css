@@ -21,7 +21,7 @@ body {
   color: var(--ink);
 }
 
-button, input { font: inherit; }
+button, input, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
 
@@ -39,6 +39,18 @@ button:disabled { cursor: not-allowed; }
   outline: 3px solid rgba(91, 85, 231, .22);
   outline-offset: 2px;
 }
+.settings-input {
+  width: 100%;
+  border: 1px solid #dbe1eb;
+  border-radius: 12px;
+  background: #fff;
+  padding: .72rem .85rem;
+  color: #17213c;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.settings-input::placeholder { color: #a0a9ba; }
+.settings-input:focus { border-color: #7772ea; box-shadow: 0 0 0 3px rgba(91, 85, 231, .12); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }

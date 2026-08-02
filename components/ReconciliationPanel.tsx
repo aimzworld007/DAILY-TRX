@@ -58,7 +58,7 @@ export function ReconciliationPanel({
                 Petty cash
               </span>
               <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
-                Pre Balance - Daily Expense = New Balance
+                Pre Balance + Total Amount = New Balance
               </span>
             </div>
 
@@ -89,14 +89,14 @@ export function ReconciliationPanel({
                 </div>
               </div>
 
-              {/* Minus Daily Expense */}
+              {/* Add Total Amount */}
               <div className="flex flex-col items-center justify-center py-2 sm:py-0 border-t sm:border-t-0 sm:border-l sm:border-r border-slate-100">
                 <div className="flex items-center gap-1 text-slate-500 text-[10px] font-bold uppercase font-sans">
-                  <Minus className="w-3 h-3 text-rose-500" />
-                  <span>Daily Expense</span>
+                  <span className="text-emerald-600">+</span>
+                  <span>Total Amount</span>
                 </div>
-                <div className="text-sm font-bold text-rose-600 mt-1">
-                  AED {summary.expenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                <div className="text-sm font-bold text-emerald-600 mt-1">
+                  AED {summary.net_income.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </div>
               </div>
 

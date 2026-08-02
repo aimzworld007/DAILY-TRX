@@ -4,50 +4,493 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, Banknote, CircleHelp, CreditCard, Globe2, Plus, ReceiptText, TrendingUp, WalletCards } from "lucide-react";
 import { SidebarNav } from "@/components/SidebarNav";
-import { fetchHistoryRecords, getDailyRecord } from "@/lib/firebase";
-import { calculateDailySummary, calculateDailyTotals, getTodayDateString, type DailyRecord, type DailyTotals } from "@/types/financial";
+import { SummaryCards } from "@/components/SummaryCards";
+import { TransactionTable } from "@/components/TransactionTable";
+import { ReconciliationPanel } from "@/components/ReconciliationPanel";
+import { PrintReportModal } from "@/components/PrintReportModal";
+import { DailyCopySummary } from "@/components/DailyCopySummary";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 const zeroTotals: DailyTotals = { total_cash_received: 0, total_amer_cost: 0, total_pay_card: 0, total_portal_cost: 0, total_net_profit: 0, total_costs: 0, gross_profit: 0 };
 
-export default function OverviewPage() {
-  const today = getTodayDateString();
-  const [record, setRecord] = useState<DailyRecord | null>(null);
-  const [recent, setRecent] = useState<DailyRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  // 2. Core Financial State
+  const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const [expenses, setExpenses] = useState<number>(0);
+  const [preBalance, setPreBalance] = useState<number>(1200);
+  const [currentBankBalance, setCurrentBankBalance] = useState<number>(0);
+
+  // 3. UI & Modal states
+  const [syncStatus, setSyncStatus] = useState<"saved" | "saving" | "error" | "offline">("saved");
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const [isPrintOpen, setIsPrintOpen] = useState<boolean>(false);
+  const [notification, setNotification] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [hydratedDate, setHydratedDate] = useState<string | null>(null);
+  const loadRequestRef = useRef(0);
+  const editVersionRef = useRef(0);
+
+  const markEdited = useCallback(() => {
+    editVersionRef.current += 1;
+  }, []);
+
+  // 4. Calculate real-time financial formulas & totals
+  const totals: DailyTotals = useMemo(
+    () => calculateDailyTotals(lineItems),
+    [lineItems]
+  );
+
+  const summary: DailySummary = useMemo(
+    () => calculateDailySummary(totals, expenses, preBalance, currentBankBalance),
+    [totals, expenses, preBalance, currentBankBalance]
+  );
+
+  const currentRecord: DailyRecord = useMemo(
+    () => ({
+      id: selectedDate,
+      date: selectedDate,
+      line_items: lineItems,
+      totals,
+      summary,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }),
+    [selectedDate, lineItems, totals, summary]
+  );
+
+  // 5. Load Record for Selected Date (from Firestore or fallback to localStorage)
+  const loadRecordForDate = useCallback(async (dateStr: string) => {
+    const requestId = ++loadRequestRef.current;
+    const editVersionAtStart = editVersionRef.current;
+    setHydratedDate(null);
+
+    const canApplyLoadedRecord = () =>
+      requestId === loadRequestRef.current &&
+      editVersionAtStart === editVersionRef.current;
+
+    const finishLoading = () => {
+      if (requestId === loadRequestRef.current) {
+        setHydratedDate(dateStr);
+      }
+    };
 
   const load = useCallback(async () => {
     setLoading(true);
     let local: DailyRecord | null = null;
     try { const raw = localStorage.getItem(`dailytrax_record_${today}`); local = raw ? JSON.parse(raw) : null; } catch { /* ignore invalid cache */ }
     try {
-      const [todayRecord, history] = await Promise.all([getDailyRecord(today), fetchHistoryRecords(6)]);
-      setRecord(todayRecord || local);
-      setRecent(history.slice(0, 5));
-    } catch {
-      setRecord(local);
-      const cached = Object.keys(localStorage).filter(k => k.startsWith("dailytrax_record_")).map(k => { try { return JSON.parse(localStorage.getItem(k) || "") as DailyRecord; } catch { return null; } }).filter((item): item is DailyRecord => Boolean(item)).sort((a,b) => b.date.localeCompare(a.date));
-      setRecent(cached.slice(0, 5));
-    } finally { setLoading(false); }
-  }, [today]);
-  useEffect(() => { const timer = window.setTimeout(load, 0); return () => window.clearTimeout(timer); }, [load]);
+      setSyncStatus("saving");
+      const remoteRecord = await getDailyRecord(dateStr);
 
-  const totals = record?.totals || (record ? calculateDailyTotals(record.line_items || []) : zeroTotals);
-  const summary = record?.summary || calculateDailySummary(totals, 0, 0, 0);
-  const ratio = useCallback((value: number) => totals.total_cash_received > 0 ? (value / totals.total_cash_received) * 100 : 0, [totals.total_cash_received]);
-  const kpis = useMemo(() => [
-    { label: "Total sales", value: totals.total_cash_received, icon: TrendingUp, tone: "text-emerald-600 bg-emerald-50", help: "Total cash received across today's transactions." },
-    { label: "Cash", value: totals.gross_profit, icon: Banknote, tone: "text-indigo-600 bg-indigo-50", help: "Sales remaining after Amer, card and portal costs." },
-    { label: "Amer", value: totals.total_amer_cost, ratio: ratio(totals.total_amer_cost), icon: WalletCards, tone: "text-amber-600 bg-amber-50", help: "Amer cost and its share of total sales." },
-    { label: "Card", value: totals.total_pay_card, ratio: ratio(totals.total_pay_card), icon: CreditCard, tone: "text-sky-600 bg-sky-50", help: "Card cost and its share of total sales." },
-    { label: "Portal", value: totals.total_portal_cost, ratio: ratio(totals.total_portal_cost), icon: Globe2, tone: "text-violet-600 bg-violet-50", help: "Portal cost and its share of total sales." },
-    { label: "Net income", value: summary.net_income, icon: ReceiptText, tone: summary.net_income >= 0 ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50", help: "Gross profit after daily expenses." },
-  ], [ratio, summary.net_income, totals]);
+      if (remoteRecord) {
+        if (canApplyLoadedRecord()) {
+          setLineItems(remoteRecord.line_items || []);
+          setExpenses(remoteRecord.summary?.expenses || 0);
+          setPreBalance(remoteRecord.summary?.petty_cash?.pre_balance ?? 0);
+          setCurrentBankBalance(
+            remoteRecord.summary?.bank_balance?.current_balance ?? 0
+          );
+        }
+        finishLoading();
+        setSyncStatus("saved");
+        return;
+      }
 
-  return <div className="min-h-screen lg:pl-56"><SidebarNav />
-    <header className="border-b border-slate-200 bg-white/90"><div className="app-shell flex items-center justify-between gap-4 px-4 py-5 sm:px-6"><div><p className="text-xs font-bold uppercase tracking-widest text-indigo-600">{new Date(`${today}T00:00:00`).toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"})}</p><h1 className="mt-1 text-2xl font-black sm:text-3xl">Overview</h1></div><Link href="/transactions?add=1" className="focus-ring inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-indigo-700"><Plus className="h-4 w-4"/>Add transaction</Link></div></header>
-    <main className="app-shell px-4 py-6 pb-28 sm:px-6 lg:pb-10">
-      <section aria-label="Daily performance" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{kpis.map(({label,value,ratio:share,icon:Icon,tone,help}) => <article key={label} className="surface-card p-5"><div className="flex items-center justify-between"><span className={`grid h-9 w-9 place-items-center rounded-xl ${tone}`}><Icon className="h-4 w-4"/></span><button type="button" title={help} aria-label={`About ${label}`} className="text-slate-400 hover:text-indigo-600"><CircleHelp className="h-4 w-4"/></button></div><p className="mt-5 text-xs font-bold uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 text-2xl font-black tracking-tight">AED {value.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</p>{share !== undefined && <div className="mt-3 flex items-center gap-3"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-indigo-500" style={{width:`${Math.min(share,100)}%`}}/></div><span className="text-xs font-bold text-slate-500">{share.toFixed(1)}%</span></div>}</article>)}</section>
-      <section className="mt-6 surface-card overflow-hidden"><div className="flex items-center justify-between border-b border-slate-100 px-5 py-4"><h2 className="font-black">Recent days</h2><Link href="/history" className="text-xs font-bold text-indigo-600">View history</Link></div><div className="divide-y divide-slate-100">{!loading && recent.length===0 && <p className="p-8 text-center text-sm text-slate-400">No saved activity</p>}{recent.map(item => <Link key={item.date} href={`/transactions?date=${item.date}`} className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"><div><p className="text-sm font-bold">{new Date(`${item.date}T00:00:00`).toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"})}</p><p className="text-xs text-slate-400">{item.line_items?.length || 0} transactions</p></div><div className="flex items-center gap-3"><p className="text-right text-sm font-black">AED {(item.totals?.total_cash_received || 0).toFixed(2)}</p><ArrowUpRight className="h-4 w-4 text-slate-400"/></div></Link>)}</div></section>
-    </main>
-  </div>;
+      // Check localStorage fallback
+      const localKey = `dailytrax_record_${dateStr}`;
+      const cached = localStorage.getItem(localKey);
+      if (cached) {
+        try {
+          const parsed: DailyRecord = JSON.parse(cached);
+          if (canApplyLoadedRecord()) {
+            setLineItems(parsed.line_items || []);
+            setExpenses(parsed.summary?.expenses || 0);
+            setPreBalance(parsed.summary?.petty_cash?.pre_balance ?? 0);
+            setCurrentBankBalance(
+              parsed.summary?.bank_balance?.current_balance ?? 0
+            );
+          }
+          finishLoading();
+          setSyncStatus("saved");
+          return;
+        } catch {
+          // ignore invalid json
+        }
+      }
+
+      // Otherwise initialize a fresh day; transactions are added through the popup.
+      if (canApplyLoadedRecord()) {
+        setLineItems([]);
+        setExpenses(0);
+        setPreBalance(0);
+        setCurrentBankBalance(0);
+      }
+      finishLoading();
+      setSyncStatus("saved");
+    } catch (error) {
+      console.warn("Firestore offline or inaccessible, switching to Local Mode:", error);
+      setSyncStatus("offline");
+      // Check localStorage fallback
+      const localKey = `dailytrax_record_${dateStr}`;
+      const cached = localStorage.getItem(localKey);
+      if (cached) {
+        try {
+          const parsed: DailyRecord = JSON.parse(cached);
+          if (canApplyLoadedRecord()) {
+            setLineItems(parsed.line_items || []);
+            setExpenses(parsed.summary?.expenses || 0);
+            setPreBalance(parsed.summary?.petty_cash?.pre_balance ?? 0);
+            setCurrentBankBalance(
+              parsed.summary?.bank_balance?.current_balance ?? 0
+            );
+          }
+          finishLoading();
+          return;
+        } catch {
+          // ignore
+        }
+      }
+      if (canApplyLoadedRecord()) {
+        setLineItems([]);
+        setExpenses(0);
+        setPreBalance(0);
+        setCurrentBankBalance(0);
+      }
+      finishLoading();
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => loadRecordForDate(selectedDate), 0);
+    return () => window.clearTimeout(timer);
+  }, [selectedDate, loadRecordForDate]);
+
+  // 6. Save current record to Firestore + localStorage
+  const saveCurrentRecord = useCallback(
+    async (showNotify = false) => {
+      const recordToSave = {
+        ...currentRecord,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Always update localStorage fallback immediately
+      try {
+        localStorage.setItem(
+          `dailytrax_record_${selectedDate}`,
+          JSON.stringify(recordToSave)
+        );
+      } catch (err) {
+        console.error("Local storage error:", err);
+      }
+
+      try {
+        setSyncStatus("saving");
+        await saveDailyRecord(recordToSave);
+        setSyncStatus("saved");
+        const nowTime = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+        setLastSavedTime(nowTime);
+        if (showNotify) {
+          setNotification({
+            type: "success",
+            message: `Ledger for ${selectedDate} saved to Firestore cloud successfully.`,
+          });
+        }
+      } catch (error) {
+        console.warn("Save failed, stored locally:", error);
+        setSyncStatus("offline");
+        if (showNotify) {
+          setNotification({
+            type: "success",
+            message: `Saved locally (Offline Mode active for ${selectedDate}).`,
+          });
+        }
+      }
+    },
+    [currentRecord, selectedDate]
+  );
+
+  // Debounced Auto-save when items change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (hydratedDate === selectedDate) {
+        saveCurrentRecord(false);
+      }
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [lineItems, expenses, preBalance, currentBankBalance, hydratedDate, selectedDate, saveCurrentRecord]);
+
+  // Auto hide notification
+  useEffect(() => {
+    if (notification) {
+      const t = setTimeout(() => setNotification(null), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [notification]);
+
+  // 7. CRUD Operations for Line Items
+  const handleAddRow = (
+    transaction: Omit<LineItem, "id" | "sn" | "net_profit">
+  ) => {
+    markEdited();
+    const nextSN = lineItems.length + 1;
+    const newRow = {
+      ...createEmptyLineItem(nextSN),
+      ...transaction,
+      net_profit: Number(
+        (
+          transaction.cash_received -
+          (transaction.amer_cost + transaction.pay_card + transaction.portal_cost)
+        ).toFixed(2)
+      ),
+    };
+    setLineItems((prev) => [...prev, newRow]);
+  };
+
+  const handleUpdateRow = (id: string, updates: Partial<LineItem>) => {
+    markEdited();
+    setLineItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const updated = { ...item, ...updates };
+        const cash = Number(updated.cash_received) || 0;
+        const amer = Number(updated.amer_cost) || 0;
+        const card = Number(updated.pay_card) || 0;
+        const portal = Number(updated.portal_cost) || 0;
+        const profit = Number((cash - (amer + card + portal)).toFixed(2));
+        return {
+          ...updated,
+          cash_received: cash,
+          amer_cost: amer,
+          pay_card: card,
+          portal_cost: portal,
+          net_profit: profit,
+        };
+      })
+    );
+  };
+
+  const handleDeleteRow = (id: string) => {
+    markEdited();
+    setLineItems((prev) => {
+      const filtered = prev.filter((item) => item.id !== id);
+      // re-index serial numbers
+      return filtered.map((item, idx) => ({
+        ...item,
+        sn: idx + 1,
+      }));
+    });
+  };
+
+  const handleDuplicateRow = (id: string) => {
+    markEdited();
+    setLineItems((prev) => {
+      const target = prev.find((item) => item.id === id);
+      if (!target) return prev;
+      const nextSN = prev.length + 1;
+      const copy: LineItem = {
+        ...target,
+        id: `row_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        sn: nextSN,
+      };
+      return [...prev, copy];
+    });
+  };
+
+  const handleMoveRow = (id: string, direction: "up" | "down") => {
+    markEdited();
+    setLineItems((prev) => {
+      const index = prev.findIndex((item) => item.id === id);
+      if (index === -1) return prev;
+      if (direction === "up" && index === 0) return prev;
+      if (direction === "down" && index === prev.length - 1) return prev;
+
+      const newItems = [...prev];
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      const [moved] = newItems.splice(index, 1);
+      newItems.splice(targetIndex, 0, moved);
+
+      return newItems.map((item, idx) => ({
+        ...item,
+        sn: idx + 1,
+      }));
+    });
+  };
+
+  const handleRenumberSn = () => {
+    markEdited();
+    setLineItems((prev) =>
+      prev.map((item, idx) => ({
+        ...item,
+        sn: idx + 1,
+      }))
+    );
+  };
+
+  const handleClearAllRows = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to clear all transactions for this day? This cannot be undone."
+      )
+    ) {
+      markEdited();
+      setLineItems([]);
+      setExpenses(0);
+    }
+  };
+
+  // 9. CSV Export Utility
+  const handleExportCsv = () => {
+    if (lineItems.length === 0) return;
+
+    const headers = [
+      "SN",
+      "Description",
+      "Cash Received (+)",
+      "Amer Cost (-)",
+      "Pay Card (-)",
+      "Portal Cost (-)",
+      "Net Profit (=)",
+    ];
+
+    const rows = lineItems.map((item) => [
+      item.sn,
+      `"${item.description.replace(/"/g, '""')}"`,
+      item.cash_received.toFixed(2),
+      item.amer_cost.toFixed(2),
+      item.pay_card.toFixed(2),
+      item.portal_cost.toFixed(2),
+      item.net_profit.toFixed(2),
+    ]);
+
+    // Footer row with totals
+    rows.push([
+      "",
+      '"TOTALS"',
+      totals.total_cash_received.toFixed(2),
+      totals.total_amer_cost.toFixed(2),
+      totals.total_pay_card.toFixed(2),
+      totals.total_portal_cost.toFixed(2),
+      totals.total_net_profit.toFixed(2),
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `DailyTrax_HabatAlRimal_${selectedDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div className="min-h-screen text-slate-900 font-sans antialiased lg:pl-56">
+      <SidebarNav />
+      {/* 1. TOP STICKY HEADER & TOOLBAR */}
+      <HeaderNav
+        selectedDate={selectedDate}
+        onDateChange={(newDate) => setSelectedDate(newDate)}
+        syncStatus={syncStatus}
+        lastSavedTime={lastSavedTime}
+        onOpenPrint={() => setIsPrintOpen(true)}
+        onExportCsv={handleExportCsv}
+        onManualSave={() => saveCurrentRecord(true)}
+      />
+
+      {/* NOTIFICATION TOAST (if active) */}
+      {notification && (
+        <div className="app-shell px-4 sm:px-6 w-full pt-3">
+          <div
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border shadow-sm text-xs font-semibold ${
+              notification.type === "success"
+                ? "bg-emerald-50 text-emerald-900 border-emerald-300"
+                : "bg-rose-50 text-rose-900 border-rose-300"
+            }`}
+          >
+            {notification.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span>{notification.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* 2. MAIN LEDGER WORKSPACE */}
+      <main className="app-shell px-4 sm:px-6 w-full pb-24 lg:pb-12 space-y-5">
+        <div id="overview" className="scroll-mt-24 pt-7 pb-1 flex items-end justify-between gap-2">
+          <div>
+            <p className="text-xs font-semibold text-indigo-600 mb-1">Workspace</p>
+            <h2 className="text-2xl sm:text-[28px] font-bold tracking-tight text-slate-900">Overview</h2>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" /> Auto-save
+          </div>
+        </div>
+        {/* KPI Summary Cards & Daily Formula Breakdown Banner */}
+        <SummaryCards
+          totals={totals}
+          summary={summary}
+          expenses={expenses}
+          onExpensesChange={(newExp) => {
+            markEdited();
+            setExpenses(newExp);
+          }}
+        />
+
+        <DailyCopySummary
+          date={selectedDate}
+          lineItems={lineItems}
+          totals={totals}
+          summary={summary}
+        />
+
+        {/* Transaction Spreadsheet Ledger Table */}
+        <div id="transactions" className="scroll-mt-24">
+          <TransactionTable
+            lineItems={lineItems}
+            totals={totals}
+            onAddRow={handleAddRow}
+            onUpdateRow={handleUpdateRow}
+            onDeleteRow={handleDeleteRow}
+            onDuplicateRow={handleDuplicateRow}
+            onMoveRow={handleMoveRow}
+            onClearAll={handleClearAllRows}
+            onRenumberSn={handleRenumberSn}
+          />
+        </div>
+
+        {/* Petty Cash & Bank Reconciliation Formula Panel */}
+        <div id="reconciliation" className="scroll-mt-24">
+          <ReconciliationPanel
+            summary={summary}
+            onPreBalanceChange={(val) => {
+              markEdited();
+              setPreBalance(val);
+            }}
+            onCurrentBankBalanceChange={(val) => {
+              markEdited();
+              setCurrentBankBalance(val);
+            }}
+          />
+        </div>
+      </main>
+
+      {/* 4. FORMAL PRINT REPORT MODAL */}
+      <PrintReportModal
+        isOpen={isPrintOpen}
+        onClose={() => setIsPrintOpen(false)}
+        record={currentRecord}
+      />
+    </div>
+  );
 }

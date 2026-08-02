@@ -21,7 +21,7 @@ export function PrintReportModal({
     window.print();
   };
 
-  const isProfitable = (record.summary?.net_income || 0) >= 0;
+  const isProfitable = (record.summary?.total_amount || 0) >= 0;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
@@ -115,14 +115,14 @@ export function PrintReportModal({
             </div>
             <div>
               <span className="text-[10px] text-slate-500 uppercase font-bold block">
-                Net Daily Income
+                Total Amount
               </span>
               <span
                 className={`text-lg font-black ${
                   isProfitable ? "text-emerald-700" : "text-rose-700"
                 }`}
               >
-                AED {record.summary.net_income.toFixed(2)}
+                AED {record.summary.total_amount.toFixed(2)}
               </span>
             </div>
           </div>
@@ -220,19 +220,19 @@ export function PrintReportModal({
                 1. Petty Cash Box Reconciliation
               </p>
               <div className="flex justify-between">
-                <span className="text-slate-600">Pre Balance:</span>
+                <span className="text-slate-600">Current Balance:</span>
                 <span className="font-bold text-slate-800">
                   AED {record.summary.petty_cash.pre_balance.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-600">Daily Expense (-):</span>
-                <span className="text-rose-600">
-                  AED {record.summary.expenses.toFixed(2)}
+                <span className="text-slate-600">Total Amount (+):</span>
+                <span className="text-emerald-700">
+                  AED {record.summary.total_amount.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between border-t border-slate-300 pt-1 font-bold">
-                <span className="text-slate-800">Petty Cash New Balance:</span>
+                <span className="text-slate-800">Petty Cash:</span>
                 <span className="text-indigo-700">
                   AED {record.summary.petty_cash.new_balance.toFixed(2)}
                 </span>

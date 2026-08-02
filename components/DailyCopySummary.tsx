@@ -40,16 +40,6 @@ export function DailyCopySummary({
     return details.length ? details.join(", ") : "None";
   }, [lineItems]);
 
-  const totalAmount = useMemo(
-    () =>
-      totals.total_cash_received -
-      totals.total_pay_card -
-      totals.total_amer_cost -
-      totals.total_portal_cost -
-      summary.expenses,
-    [summary.expenses, totals]
-  );
-
   const mainSummaryText = useMemo(
     () =>
       [
@@ -62,19 +52,19 @@ export function DailyCopySummary({
         `Amer/Tahseel Cost = ${money(totals.total_amer_cost)}`,
         `Net Income = Total Ticket - Credit Card Paid - Amer/Tahseel Cost - Portal Cost = ${money(totals.gross_profit)}`,
         `Expense = ${money(summary.expenses)}`,
-        `Total Amount = Net Income - Expense = ${money(totalAmount)}`,
+        `Total Amount = (Total Ticket + Credit Card Paid + Amer/Tahseel Cost + Net Income) - Expense = ${money(summary.total_amount)}`,
       ].join("\n"),
-    [date, portalDetails, summary.expenses, totalAmount, totals]
+    [date, portalDetails, summary, totals]
   );
 
   const pettyCashSummaryText = useMemo(
     () =>
       [
         "PETTY CASH SUMMARY:",
-        `Pre balance = ${money(summary.petty_cash.pre_balance)}`,
-        `Current balance = ${money(summary.bank_balance.current_balance)}`,
-        `New balance = Pre balance + Total Amount = ${money(summary.petty_cash.new_balance)}`,
-        `Net balance = Current balance - New balance = ${money(summary.bank_balance.net_balance)}`,
+        `Current balance = ${money(summary.petty_cash.pre_balance)}`,
+        `Petty cash = Current balance + Total Amount = ${money(summary.petty_cash.new_balance)}`,
+        `Current bank balance = ${money(summary.bank_balance.current_balance)}`,
+        `Net balance = Current bank balance - Petty cash = ${money(summary.bank_balance.net_balance)}`,
       ].join("\n"),
     [summary]
   );

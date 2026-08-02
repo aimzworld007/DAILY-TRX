@@ -23,7 +23,7 @@ export function SummaryCards({
   expenses,
   onExpensesChange,
 }: SummaryCardsProps) {
-  const isProfitable = summary.net_income >= 0;
+  const isProfitable = summary.total_amount >= 0;
 
   return (
     <section>
@@ -114,18 +114,18 @@ export function SummaryCards({
         <div className="space-y-1">
           <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-1.5">
             <PieChart className="w-4 h-4 text-indigo-400" />
-            Today’s bottom line
+            Today’s total amount
           </h3>
           <p className="text-xs text-slate-400 font-sans">
-            Net income is gross profit ({totals.gross_profit.toFixed(2)}) minus daily expenses ({summary.expenses.toFixed(2)}).
+            Total Ticket + Credit Card Paid + Amer/Tahseel Cost + Net Income − Expense.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-6 font-mono text-sm border-t md:border-t-0 border-slate-800 pt-3 md:pt-0">
           <div className="flex flex-col">
-            <span className="text-slate-400 text-[10px] uppercase">Gross Profit</span>
+            <span className="text-slate-400 text-[10px] uppercase">Ticket + Card + Amer + Net Income</span>
             <span className="text-indigo-200 font-bold">
-              + AED {totals.gross_profit.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              + AED {(totals.total_cash_received + totals.total_pay_card + totals.total_amer_cost + totals.gross_profit).toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </span>
           </div>
           <div className="flex flex-col">
@@ -137,7 +137,7 @@ export function SummaryCards({
           <div className="flex items-center gap-3 bg-white/10 px-5 py-3 rounded-xl border border-white/10">
             <div>
               <span className="font-bold uppercase text-[10px] tracking-widest text-slate-300 block">
-                Net Daily Income
+                Total Amount
               </span>
               <span
                 className={`text-lg sm:text-xl font-bold ${
@@ -146,7 +146,7 @@ export function SummaryCards({
                     : "text-rose-400 underline underline-offset-4 decoration-rose-600"
                 }`}
               >
-                AED {summary.net_income.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                AED {summary.total_amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>

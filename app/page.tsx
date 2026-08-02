@@ -33,7 +33,12 @@ export default function OverviewPage() {
   useEffect(() => { const timer = window.setTimeout(load, 0); return () => window.clearTimeout(timer); }, [load]);
 
   const totals = record?.totals || (record ? calculateDailyTotals(record.line_items || []) : zeroTotals);
-  const summary = record?.summary || calculateDailySummary(totals, 0, 0, 0);
+  const summary = calculateDailySummary(
+    totals,
+    record?.summary?.expenses || 0,
+    record?.summary?.petty_cash?.pre_balance || 0,
+    record?.summary?.bank_balance?.current_balance || 0
+  );
   const addTransaction = async (values: Omit<LineItem, "id" | "sn" | "net_profit">) => {
     const item: LineItem = { ...values, id: `row_${Date.now()}`, sn: (record?.line_items?.length || 0) + 1, net_profit: calculateLineProfit(values) };
     const lineItems = [...(record?.line_items || []), item];

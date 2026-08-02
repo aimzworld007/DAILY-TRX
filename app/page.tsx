@@ -21,6 +21,7 @@ import { SummaryCards } from "@/components/SummaryCards";
 import { TransactionTable } from "@/components/TransactionTable";
 import { ReconciliationPanel } from "@/components/ReconciliationPanel";
 import { PrintReportModal } from "@/components/PrintReportModal";
+import { DailyCopySummary } from "@/components/DailyCopySummary";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function HabatAlRimalDailyTraxPage() {
@@ -34,7 +35,7 @@ export default function HabatAlRimalDailyTraxPage() {
   // 2. Core Financial State
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [expenses, setExpenses] = useState<number>(0);
-  const [preBalance, setPreBalance] = useState<number>(0);
+  const [preBalance, setPreBalance] = useState<number>(1200);
   const [currentBankBalance, setCurrentBankBalance] = useState<number>(0);
 
   // 3. UI & Modal states
@@ -459,6 +460,13 @@ export default function HabatAlRimalDailyTraxPage() {
             markEdited();
             setExpenses(newExp);
           }}
+        />
+
+        <DailyCopySummary
+          date={selectedDate}
+          lineItems={lineItems}
+          totals={totals}
+          summary={summary}
         />
 
         {/* Transaction Spreadsheet Ledger Table */}

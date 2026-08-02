@@ -53,7 +53,8 @@ export function HistoryModal({
 
   useEffect(() => {
     if (isOpen) {
-      loadArchive();
+      const timer = window.setTimeout(loadArchive, 0);
+      return () => window.clearTimeout(timer);
     }
   }, [isOpen]);
 

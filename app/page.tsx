@@ -137,7 +137,8 @@ export default function HabatAlRimalDailyTraxPage() {
   }, []);
 
   useEffect(() => {
-    loadRecordForDate(selectedDate);
+    const timer = window.setTimeout(() => loadRecordForDate(selectedDate), 0);
+    return () => window.clearTimeout(timer);
   }, [selectedDate, loadRecordForDate]);
 
   // 6. Save current record to Firestore + localStorage
@@ -362,7 +363,7 @@ export default function HabatAlRimalDailyTraxPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-100 text-slate-900 font-sans antialiased">
+    <div className="flex flex-col min-h-screen text-slate-900 font-sans antialiased">
       {/* 1. TOP STICKY HEADER & TOOLBAR */}
       <HeaderNav
         selectedDate={selectedDate}
@@ -377,7 +378,7 @@ export default function HabatAlRimalDailyTraxPage() {
 
       {/* NOTIFICATION TOAST (if active) */}
       {notification && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full pt-2">
+        <div className="app-shell px-4 sm:px-6 w-full pt-3">
           <div
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border shadow-sm text-xs font-semibold ${
               notification.type === "success"
@@ -396,7 +397,17 @@ export default function HabatAlRimalDailyTraxPage() {
       )}
 
       {/* 2. MAIN LEDGER WORKSPACE */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 w-full pb-10 space-y-4">
+      <main className="flex-1 app-shell px-4 sm:px-6 w-full pb-12 space-y-5">
+        <div className="pt-7 pb-1 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <p className="text-xs font-semibold text-indigo-600 mb-1">Financial workspace</p>
+            <h2 className="text-2xl sm:text-[28px] font-bold tracking-tight text-slate-900">Daily overview</h2>
+            <p className="text-sm text-slate-500 mt-1">Record transactions, review profit, and reconcile balances in one place.</p>
+          </div>
+          <div className="text-xs text-slate-500 bg-white border border-slate-200 rounded-full px-3 py-1.5 shadow-xs">
+            Changes save automatically
+          </div>
+        </div>
         {/* KPI Summary Cards & Daily Formula Breakdown Banner */}
         <SummaryCards
           totals={totals}

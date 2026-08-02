@@ -87,14 +87,14 @@ export function TransactionTable({
   );
 
   return (
-    <section className="mt-4">
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+    <section>
+      <div className="surface-card overflow-hidden">
         {/* Table Toolbar & Search */}
-        <div className="p-4 bg-slate-50/80 border-b border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div className="p-5 bg-white border-b border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
-                Daily Transactions Ledger
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">
+                Transactions
               </h3>
               <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold">
                 {lineItems.length} {lineItems.length === 1 ? "row" : "rows"}
@@ -140,7 +140,7 @@ export function TransactionTable({
             <button
               type="button"
               onClick={openAddTransaction}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-xs flex items-center gap-1.5"
+              className="focus-ring px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200 flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4" />
               Add Transaction
@@ -191,36 +191,36 @@ export function TransactionTable({
         {/* Desktop Spreadsheet Table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 bg-slate-800 text-white text-[10px] uppercase font-semibold">
+            <thead className="sticky top-0 bg-slate-50 text-slate-500 text-[10px] uppercase font-semibold border-b border-slate-200">
               <tr>
-                <th className="p-2 w-12 border-r border-slate-700 text-center">S.N</th>
-                <th className="p-2 border-r border-slate-700 min-w-[240px]">Description</th>
-                <th className="p-2 w-28 border-r border-slate-700 text-right">
-                  <div className="flex items-center justify-end gap-1 text-emerald-300">
+                <th className="p-3 w-12 text-center">S.N</th>
+                <th className="p-3 min-w-[240px]">Description</th>
+                <th className="p-3 w-28 text-right">
+                  <div className="flex items-center justify-end gap-1 text-emerald-700">
                     <TrendingUp className="w-3 h-3" />
                     <span>Cash (+)</span>
                   </div>
                 </th>
-                <th className="p-2 w-24 border-r border-slate-700 text-right">
-                  <div className="flex items-center justify-end gap-1 text-rose-300">
+                <th className="p-3 w-24 text-right">
+                  <div className="flex items-center justify-end gap-1 text-rose-600">
                     <Banknote className="w-3 h-3" />
                     <span>Amer (-)</span>
                   </div>
                 </th>
-                <th className="p-2 w-24 border-r border-slate-700 text-right">
-                  <div className="flex items-center justify-end gap-1 text-rose-300">
+                <th className="p-3 w-24 text-right">
+                  <div className="flex items-center justify-end gap-1 text-rose-600">
                     <CreditCard className="w-3 h-3" />
                     <span>Pay Card</span>
                   </div>
                 </th>
-                <th className="p-2 w-24 border-r border-slate-700 text-right">
-                  <div className="flex items-center justify-end gap-1 text-rose-300">
+                <th className="p-3 w-24 text-right">
+                  <div className="flex items-center justify-end gap-1 text-rose-600">
                     <Globe className="w-3 h-3" />
                     <span>Portal</span>
                   </div>
                 </th>
-                <th className="p-2 w-28 bg-indigo-900 text-right text-indigo-100 font-bold">Net Profit</th>
-                <th className="p-2 w-24 text-center">Actions</th>
+                <th className="p-3 w-28 bg-indigo-50 text-right text-indigo-700 font-bold">Net Profit</th>
+                <th className="p-3 w-24 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="text-[11px] font-mono divide-y divide-slate-100 overflow-y-auto">

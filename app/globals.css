@@ -1,1 +1,45 @@
 @import "tailwindcss";
+
+:root {
+  --ink: #17213c;
+  --muted: #69738d;
+  --line: #e5e9f2;
+  --surface: #ffffff;
+  --canvas: #f6f7fb;
+  --brand: #5b55e7;
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--canvas); }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(91, 85, 231, .06), transparent 25rem),
+    var(--canvas);
+  color: var(--ink);
+}
+
+button, input { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+
+::selection { background: #dddafe; color: #302b91; }
+
+/* Shared application primitives keep repeated utility combinations consistent. */
+.app-shell { width: min(1440px, 100%); margin-inline: auto; }
+.surface-card {
+  background: rgba(255, 255, 255, .96);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(23, 33, 60, .04), 0 8px 24px rgba(23, 33, 60, .035);
+}
+.focus-ring:focus-visible {
+  outline: 3px solid rgba(91, 85, 231, .22);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}

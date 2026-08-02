@@ -7,11 +7,6 @@ import {
   Wallet,
   DollarSign,
   PieChart,
-  Banknote,
-  CreditCard,
-  Globe,
-  ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react";
 import { DailyTotals, DailySummary } from "@/types/financial";
 
@@ -31,37 +26,37 @@ export function SummaryCards({
   const isProfitable = summary.net_income >= 0;
 
   return (
-    <section className="mt-3">
+    <section>
       {/* Top 4 KPI Metric Cards in High Density Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         {/* CARD 1: Total Ticket / Revenue */}
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+        <div className="surface-card p-5 flex flex-col justify-between min-h-36">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] uppercase font-bold text-slate-400 leading-tight tracking-wider">
+            <p className="text-xs font-semibold text-slate-500 leading-tight">
               Gross Revenue (+)
             </p>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
+            <TrendingUp className="w-5 h-5 text-emerald-600 bg-emerald-50 p-0.5 rounded" />
           </div>
-          <p className="text-xl font-mono font-bold text-slate-900 leading-tight mt-1.5">
+          <p className="text-2xl font-bold tracking-tight text-slate-900 leading-tight mt-4">
             AED {totals.total_cash_received.toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </p>
-          <p className="text-[10px] font-mono text-emerald-700 mt-1">
+          <p className="text-xs text-emerald-700 mt-1">
             Sum of all Cash Received
           </p>
         </div>
 
         {/* CARD 2: Total Direct Costs */}
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+        <div className="surface-card p-5 flex flex-col justify-between min-h-36">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] uppercase font-bold text-slate-400 leading-tight tracking-wider">
+            <p className="text-xs font-semibold text-slate-500 leading-tight">
               Direct Costs (-)
             </p>
-            <Receipt className="w-4 h-4 text-rose-500" />
+            <Receipt className="w-5 h-5 text-rose-500 bg-rose-50 p-0.5 rounded" />
           </div>
-          <p className="text-xl font-mono font-bold text-rose-600 leading-tight mt-1.5">
+          <p className="text-2xl font-bold tracking-tight text-rose-600 leading-tight mt-4">
             AED {totals.total_costs.toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-slate-500">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
             <span>Amer: {totals.total_amer_cost}</span>
             <span>• Card: {totals.total_pay_card}</span>
             <span>• Portal: {totals.total_portal_cost}</span>
@@ -69,28 +64,28 @@ export function SummaryCards({
         </div>
 
         {/* CARD 3: Gross Profit */}
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+        <div className="surface-card p-5 flex flex-col justify-between min-h-36">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] uppercase font-bold text-slate-400 leading-tight tracking-wider">
+            <p className="text-xs font-semibold text-slate-500 leading-tight">
               Gross Profit (=)
             </p>
-            <DollarSign className="w-4 h-4 text-indigo-600" />
+            <DollarSign className="w-5 h-5 text-indigo-600 bg-indigo-50 p-0.5 rounded" />
           </div>
-          <p className="text-xl font-mono font-bold text-indigo-900 leading-tight mt-1.5">
+          <p className="text-2xl font-bold tracking-tight text-indigo-900 leading-tight mt-4">
             AED {totals.gross_profit.toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </p>
-          <p className="text-[10px] font-mono text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Revenue − Direct Costs
           </p>
         </div>
 
         {/* CARD 4: Daily Expenses (Editable in High Density style) */}
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+        <div className="surface-card p-5 flex flex-col justify-between min-h-36 ring-1 ring-indigo-100">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] uppercase font-bold text-slate-400 leading-tight tracking-wider">
+            <p className="text-xs font-semibold text-slate-500 leading-tight">
               Daily Expense (-)
             </p>
-            <Wallet className="w-4 h-4 text-rose-500" />
+            <Wallet className="w-5 h-5 text-amber-600 bg-amber-50 p-0.5 rounded" />
           </div>
           <div className="flex items-center gap-1 mt-1">
             <span className="text-xs font-mono font-bold text-slate-400">AED</span>
@@ -104,24 +99,25 @@ export function SummaryCards({
                 const val = parseFloat(e.target.value);
                 onExpensesChange(isNaN(val) ? 0 : val);
               }}
-              className="w-full text-xl font-mono font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-300 focus:border-indigo-600 focus:bg-white focus:outline-hidden transition-colors"
+              aria-label="Daily expenses in AED"
+              className="w-full text-xl font-bold text-slate-900 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-3 focus:ring-indigo-100 focus:bg-white focus:outline-hidden transition-all"
             />
           </div>
-          <p className="text-[10px] font-mono text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Typing office daily overhead
           </p>
         </div>
       </div>
 
       {/* Financial Formula Card (High Density Dark Banner) */}
-      <div className="bg-slate-900 text-white rounded-lg p-4 sm:p-5 flex flex-col md:flex-row items-stretch md:items-center justify-between shadow-lg border border-slate-800 gap-4">
+      <div className="rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row items-stretch md:items-center justify-between shadow-lg shadow-indigo-950/10 border border-indigo-900 gap-5 bg-linear-to-r from-slate-950 to-indigo-950 text-white">
         <div className="space-y-1">
           <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-1.5">
             <PieChart className="w-4 h-4 text-indigo-400" />
-            Daily Summary Breakdown
+            Today’s bottom line
           </h3>
           <p className="text-xs text-slate-400 font-sans">
-            Formula: Net Income = Gross Profit ({totals.gross_profit.toFixed(2)}) − Daily Expense ({summary.expenses.toFixed(2)})
+            Net income is gross profit ({totals.gross_profit.toFixed(2)}) minus daily expenses ({summary.expenses.toFixed(2)}).
           </p>
         </div>
 
@@ -138,7 +134,7 @@ export function SummaryCards({
               - AED {summary.expenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </span>
           </div>
-          <div className="flex items-center gap-3 bg-slate-800/80 px-4 py-2.5 rounded-lg border border-slate-700">
+          <div className="flex items-center gap-3 bg-white/10 px-5 py-3 rounded-xl border border-white/10">
             <div>
               <span className="font-bold uppercase text-[10px] tracking-widest text-slate-300 block">
                 Net Daily Income

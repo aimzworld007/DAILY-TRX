@@ -24,38 +24,38 @@ export function ReconciliationPanel({
   onCurrentBankBalanceChange,
 }: ReconciliationPanelProps) {
   return (
-    <section className="mt-4">
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+    <section>
+      <div className="surface-card overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-2.5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
+        <div className="px-5 py-4 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded bg-indigo-600/30 text-indigo-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <Calculator className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h3 className="text-xs font-bold tracking-tight uppercase text-white">
-                Cash Box & Bank Account Reconciliation
+              <h3 className="text-base font-bold tracking-tight text-slate-900">
+                Balance reconciliation
               </h3>
-              <p className="text-[10px] text-slate-400 font-mono">
-                Live verification of Petty Cash New Balance & Net Bank Balance
+              <p className="text-xs text-slate-500">
+                Verify petty cash and bank balances before closing the day
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[10px] font-mono bg-slate-800 px-2.5 py-1 rounded text-indigo-200 border border-slate-700 uppercase">
-            <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Habat Al Rimal Ledger Standard</span>
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold bg-emerald-50 px-3 py-1.5 rounded-full text-emerald-700 border border-emerald-100 uppercase">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Live calculation</span>
           </div>
         </div>
 
         {/* Two Reconciliation Blocks */}
         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 font-mono">
           {/* LEFT: Petty Cash Reconciliation */}
-          <div className="p-3 sm:p-4 bg-slate-50/70">
+          <div className="p-4 sm:p-5 bg-slate-50/40">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 font-sans">
                 <Vault className="w-3.5 h-3.5 text-emerald-600" />
-                1. Petty Cash Box Formula
+                Petty cash
               </span>
               <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
                 Pre Balance - Daily Expense = New Balance
@@ -114,11 +114,11 @@ export function ReconciliationPanel({
           </div>
 
           {/* RIGHT: Bank Account Reconciliation */}
-          <div className="p-3 sm:p-4 bg-slate-50/70">
+          <div className="p-4 sm:p-5 bg-slate-50/40">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 font-sans">
                 <Landmark className="w-3.5 h-3.5 text-indigo-600" />
-                2. Bank Account Formula
+                Bank account
               </span>
               <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
                 Current Bank - Petty New Balance = Net Balance

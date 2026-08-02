@@ -17,11 +17,8 @@ import {
 } from "@/lib/firebase";
 import { HeaderNav } from "@/components/HeaderNav";
 import { SidebarNav } from "@/components/SidebarNav";
-import { SummaryCards } from "@/components/SummaryCards";
 import { TransactionTable } from "@/components/TransactionTable";
-import { ReconciliationPanel } from "@/components/ReconciliationPanel";
 import { PrintReportModal } from "@/components/PrintReportModal";
-import { DailyCopySummary } from "@/components/DailyCopySummary";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function TransactionsPage() {
@@ -451,24 +448,6 @@ export default function TransactionsPage() {
             <span className="h-2 w-2 rounded-full bg-emerald-500" /> Auto-save
           </div>
         </div>
-        {/* KPI Summary Cards & Daily Formula Breakdown Banner */}
-        <SummaryCards
-          totals={totals}
-          summary={summary}
-          expenses={expenses}
-          onExpensesChange={(newExp) => {
-            markEdited();
-            setExpenses(newExp);
-          }}
-        />
-
-        <DailyCopySummary
-          date={selectedDate}
-          lineItems={lineItems}
-          totals={totals}
-          summary={summary}
-        />
-
         {/* Transaction Spreadsheet Ledger Table */}
         <div id="transactions" className="scroll-mt-24">
           <TransactionTable
@@ -481,21 +460,6 @@ export default function TransactionsPage() {
             onMoveRow={handleMoveRow}
             onClearAll={handleClearAllRows}
             onRenumberSn={handleRenumberSn}
-          />
-        </div>
-
-        {/* Petty Cash & Bank Reconciliation Formula Panel */}
-        <div id="reconciliation" className="scroll-mt-24">
-          <ReconciliationPanel
-            summary={summary}
-            onPreBalanceChange={(val) => {
-              markEdited();
-              setPreBalance(val);
-            }}
-            onCurrentBankBalanceChange={(val) => {
-              markEdited();
-              setCurrentBankBalance(val);
-            }}
           />
         </div>
       </main>

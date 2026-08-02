@@ -51,6 +51,31 @@ export function getDb(): Firestore {
 }
 
 const COLLECTION_NAME = "daily_records";
+const COMPANY_PROFILES_COLLECTION = "company_profiles";
+
+export interface CompanyProfile {
+  companyName: string;
+  address: string;
+  details: string;
+  contact: string;
+  email: string;
+  logoUrl: string;
+  website: string;
+  registrationNumber: string;
+  updatedAt?: string;
+}
+
+export async function fetchCompanyProfile(userId: string): Promise<CompanyProfile | null> {
+  const profileSnap = await getDoc(doc(getDb(), COMPANY_PROFILES_COLLECTION, userId));
+  return profileSnap.exists() ? profileSnap.data() as CompanyProfile : null;
+}
+
+export async function saveCompanyProfile(userId: string, profile: CompanyProfile): Promise<void> {
+  await setDoc(doc(getDb(), COMPANY_PROFILES_COLLECTION, userId), {
+    ...profile,
+    updatedAt: new Date().toISOString(),
+  });
+}
 
 /**
  * Fetch a daily financial record by date (YYYY-MM-DD)

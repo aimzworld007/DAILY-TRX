@@ -11,13 +11,10 @@ import {
   calculateDailyTotals,
   calculateDailySummary,
   createEmptyLineItem,
-  HABAT_SERVICE_PRESETS,
 } from "@/types/financial";
 import {
   saveDailyRecord,
   getDailyRecord,
-  getAllDailyRecords,
-  deleteDailyRecord,
 } from "@/lib/firebase";
 import { HeaderNav } from "@/components/HeaderNav";
 import { SummaryCards } from "@/components/SummaryCards";
@@ -38,13 +35,10 @@ export default function HabatAlRimalDailyTraxPage() {
   const [currentBankBalance, setCurrentBankBalance] = useState<number>(25000);
 
   // 3. UI & Modal states
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [syncStatus, setSyncStatus] = useState<"saved" | "saving" | "error" | "offline">("saved");
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [isPrintOpen, setIsPrintOpen] = useState<boolean>(false);
-  const [historyRecords, setHistoryRecords] = useState<DailyRecord[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const [notification, setNotification] = useState<{
     type: "success" | "error";
     message: string;
@@ -441,54 +435,9 @@ export default function HabatAlRimalDailyTraxPage() {
     document.body.removeChild(link);
   };
 
-  // 10. Open Archive History & Load records from Firestore
-  const handleOpenHistory = async () => {
+  // 10. Open Archive History Modal
+  const handleOpenHistory = () => {
     setIsHistoryOpen(true);
-    setIsLoadingHistory(true);
-    try {
-      const records = await getAllDailyRecords();
-      setHistoryRecords(records);
-    } catch (err) {
-      console.warn("Failed to load archive history from Firestore:", err);
-      // Fallback: list from localStorage
-      const localRecords: DailyRecord[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("dailytrax_record_")) {
-          try {
-            const parsed = JSON.parse(localStorage.getItem(key) || "");
-            if (parsed && parsed.date) {
-              localRecords.push(parsed);
-            }
-          } catch {
-            // ignore
-          }
-        }
-      }
-      localRecords.sort((a, b) => b.date.localeCompare(a.date));
-      setHistoryRecords(localRecords);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
-
-  const handleSelectHistoryRecord = (record: DailyRecord) => {
-    setSelectedDate(record.date);
-    setIsHistoryOpen(false);
-  };
-
-  const handleDeleteHistoryRecord = async (dateStr: string) => {
-    try {
-      await deleteDailyRecord(dateStr);
-      localStorage.removeItem(`dailytrax_record_${dateStr}`);
-      setHistoryRecords((prev) => prev.filter((r) => r.date !== dateStr));
-      if (dateStr === selectedDate) {
-        setLineItems([createEmptyLineItem(1)]);
-        setExpenses(0);
-      }
-    } catch (err) {
-      console.error("Failed to delete record:", err);
-    }
   };
 
   return (
@@ -540,16 +489,13 @@ export default function HabatAlRimalDailyTraxPage() {
         <TransactionTable
           lineItems={lineItems}
           totals={totals}
-          searchQuery={searchQuery}
-          onSearchChange={(q) => setSearchQuery(q)}
           onAddRow={handleAddRow}
           onUpdateRow={handleUpdateRow}
           onDeleteRow={handleDeleteRow}
           onDuplicateRow={handleDuplicateRow}
           onMoveRow={handleMoveRow}
-          onApplyPreset={handleApplyPreset}
           onClearAll={handleClearAllRows}
-          presets={HABAT_SERVICE_PRESETS}
+          onRenumberSn={handleRenumberSn}
         />
 
         {/* Petty Cash & Bank Reconciliation Formula Panel */}
@@ -564,10 +510,11 @@ export default function HabatAlRimalDailyTraxPage() {
       <HistoryModal
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
-        records={historyRecords}
-        isLoading={isLoadingHistory}
-        onSelectRecord={handleSelectHistoryRecord}
-        onDeleteRecord={handleDeleteHistoryRecord}
+        onSelectDate={(dateStr) => {
+          setSelectedDate(dateStr);
+          setIsHistoryOpen(false);
+        }}
+        currentDate={selectedDate}
       />
 
       {/* 4. FORMAL PRINT REPORT MODAL */}

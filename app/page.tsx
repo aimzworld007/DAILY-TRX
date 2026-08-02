@@ -103,9 +103,8 @@ export default function HabatAlRimalDailyTraxPage() {
         }
       }
 
-      // Otherwise initialize fresh empty day with 1 initial line item
-      const initialLine = createEmptyLineItem(1);
-      setLineItems([initialLine]);
+      // Otherwise initialize a fresh day; transactions are added through the popup.
+      setLineItems([]);
       setExpenses(0);
       setPreBalance(0);
       setCurrentBankBalance(0);
@@ -130,7 +129,7 @@ export default function HabatAlRimalDailyTraxPage() {
           // ignore
         }
       }
-      setLineItems([createEmptyLineItem(1)]);
+      setLineItems([]);
       setExpenses(0);
       setPreBalance(0);
       setCurrentBankBalance(0);
@@ -206,9 +205,20 @@ export default function HabatAlRimalDailyTraxPage() {
   }, [notification]);
 
   // 7. CRUD Operations for Line Items
-  const handleAddRow = () => {
+  const handleAddRow = (
+    transaction: Omit<LineItem, "id" | "sn" | "net_profit">
+  ) => {
     const nextSN = lineItems.length + 1;
-    const newRow = createEmptyLineItem(nextSN);
+    const newRow = {
+      ...createEmptyLineItem(nextSN),
+      ...transaction,
+      net_profit: Number(
+        (
+          transaction.cash_received -
+          (transaction.amer_cost + transaction.pay_card + transaction.portal_cost)
+        ).toFixed(2)
+      ),
+    };
     setLineItems((prev) => [...prev, newRow]);
   };
 
@@ -293,7 +303,7 @@ export default function HabatAlRimalDailyTraxPage() {
         "Are you sure you want to clear all transactions for this day? This cannot be undone."
       )
     ) {
-      setLineItems([createEmptyLineItem(1)]);
+      setLineItems([]);
       setExpenses(0);
     }
   };

@@ -40,6 +40,16 @@ export function DailyCopySummary({
     return details.length ? details.join(", ") : "None";
   }, [lineItems]);
 
+  const totalAmount = useMemo(
+    () =>
+      totals.total_cash_received -
+      totals.total_pay_card -
+      totals.total_amer_cost -
+      totals.total_portal_cost -
+      summary.expenses,
+    [summary.expenses, totals]
+  );
+
   const mainSummaryText = useMemo(
     () =>
       [
@@ -50,11 +60,11 @@ export function DailyCopySummary({
         `Portal = ${portalDetails}`,
         `Credit Card Paid = ${money(totals.total_pay_card)}`,
         `Amer/Tahseel Cost = ${money(totals.total_amer_cost)}`,
-        `Net Income = ${money(totals.gross_profit)}`,
+        `Net Income = Total Ticket - Credit Card Paid - Amer/Tahseel Cost - Portal Cost = ${money(totals.gross_profit)}`,
         `Expense = ${money(summary.expenses)}`,
-        `Total Amount = ${money(summary.net_income)}`,
+        `Total Amount = Net Income - Expense = ${money(totalAmount)}`,
       ].join("\n"),
-    [date, portalDetails, summary, totals]
+    [date, portalDetails, summary.expenses, totalAmount, totals]
   );
 
   const pettyCashSummaryText = useMemo(

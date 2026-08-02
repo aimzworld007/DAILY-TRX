@@ -19,6 +19,7 @@ import { HeaderNav } from "@/components/HeaderNav";
 import { SidebarNav } from "@/components/SidebarNav";
 import { TransactionTable } from "@/components/TransactionTable";
 import { PrintReportModal } from "@/components/PrintReportModal";
+import { ReconciliationPanel } from "@/components/ReconciliationPanel";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function TransactionsPage() {
@@ -460,6 +461,19 @@ export default function TransactionsPage() {
             onMoveRow={handleMoveRow}
             onClearAll={handleClearAllRows}
             onRenumberSn={handleRenumberSn}
+          />
+        </div>
+        <div id="reconciliation" className="scroll-mt-24">
+          <ReconciliationPanel
+            summary={summary}
+            onPreBalanceChange={(value) => {
+              markEdited();
+              setPreBalance(value);
+            }}
+            onCurrentBankBalanceChange={(value) => {
+              markEdited();
+              setCurrentBankBalance(value);
+            }}
           />
         </div>
       </main>

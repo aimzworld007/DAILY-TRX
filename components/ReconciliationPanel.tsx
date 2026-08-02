@@ -129,7 +129,7 @@ export function ReconciliationPanel({
               {/* Current Bank Balance Input */}
               <div className="flex flex-col">
                 <label className="text-[10px] font-bold text-slate-500 uppercase font-sans">
-                  Current Bank
+                  Current Balance
                 </label>
                 <div className="flex items-center mt-1">
                   <span className="text-xs font-bold text-slate-400 mr-1">AED</span>

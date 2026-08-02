@@ -26,13 +26,22 @@ export default function SummaryPage() {
   useEffect(() => { const timer = window.setTimeout(() => load(selectedDate), 0); return () => window.clearTimeout(timer); }, [load, selectedDate]);
 
   const totals = useMemo(() => record?.totals || (record ? calculateDailyTotals(record.line_items || []) : zeroTotals), [record]);
-  const summary = useMemo(() => record?.summary || calculateDailySummary(totals, 0, 0, 0), [record, totals]);
+  const summary = useMemo(
+    () =>
+      calculateDailySummary(
+        totals,
+        record?.summary?.expenses || 0,
+        record?.summary?.petty_cash?.pre_balance || 0,
+        record?.summary?.bank_balance?.current_balance || 0
+      ),
+    [record, totals]
+  );
   const money = (value: number) => `AED ${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const cards = [
     { label: "Gross revenue", value: totals.total_cash_received, note: `${record?.line_items?.length || 0} transactions`, icon: TrendingUp, tone: "text-emerald-600 bg-emerald-50" },
     { label: "Direct costs", value: totals.total_costs, note: "Amer, card & portal", icon: Receipt, tone: "text-rose-600 bg-rose-50" },
     { label: "Gross profit", value: totals.gross_profit, note: "Revenue minus costs", icon: Wallet, tone: "text-indigo-600 bg-indigo-50" },
-    { label: "Net income", value: summary.net_income, note: `${money(summary.expenses)} expenses`, icon: Landmark, tone: summary.net_income >= 0 ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50" },
+    { label: "Total amount", value: summary.total_amount, note: "Ticket + card + Amer + net income − expense", icon: Landmark, tone: summary.total_amount >= 0 ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50" },
   ];
 
   return <PageShell eyebrow="Daily performance" title="Summary" description="Review the complete financial summary for any ledger date.">
@@ -47,7 +56,7 @@ export default function SummaryPage() {
       </section>
 
       <section className="mt-5 grid gap-4 md:grid-cols-2">
-        <article className="surface-card p-5"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Petty cash</p><div className="mt-4 space-y-3 text-sm"><div className="flex justify-between"><span className="text-slate-500">Previous balance</span><strong>{money(summary.petty_cash.pre_balance)}</strong></div><div className="flex justify-between border-t border-slate-100 pt-3"><span className="text-slate-500">New balance</span><strong className="text-indigo-700">{money(summary.petty_cash.new_balance)}</strong></div></div></article>
+        <article className="surface-card p-5"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Petty cash</p><div className="mt-4 space-y-3 text-sm"><div className="flex justify-between"><span className="text-slate-500">Current balance</span><strong>{money(summary.petty_cash.pre_balance)}</strong></div><div className="flex justify-between"><span className="text-slate-500">Total amount</span><strong>{money(summary.total_amount)}</strong></div><div className="flex justify-between border-t border-slate-100 pt-3"><span className="text-slate-500">Petty cash</span><strong className="text-indigo-700">{money(summary.petty_cash.new_balance)}</strong></div></div></article>
         <article className="surface-card p-5"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Bank reconciliation</p><div className="mt-4 space-y-3 text-sm"><div className="flex justify-between"><span className="text-slate-500">Current bank balance</span><strong>{money(summary.bank_balance.current_balance)}</strong></div><div className="flex justify-between border-t border-slate-100 pt-3"><span className="text-slate-500">Net balance</span><strong className="text-indigo-700">{money(summary.bank_balance.net_balance)}</strong></div></div></article>
       </section>
 

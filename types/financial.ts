@@ -23,9 +23,10 @@ export interface DailyTotals {
 export interface DailySummary {
   expenses: number;
   net_income: number;        // Gross Profit - Expenses
+  total_amount: number;      // Ticket + Card Paid + Amer/Tahseel + Gross Profit - Expense
   petty_cash: {
-    pre_balance: number;
-    new_balance: number;     // Pre Balance + Total Amount (net income)
+    pre_balance: number;     // User-entered current petty cash balance
+    new_balance: number;     // Current Balance + Total Amount
   };
   bank_balance: {
     current_balance: number;
@@ -69,7 +70,8 @@ export function calculateLineProfit(item: {
  * - Total Costs = Amer Cost + Pay Card + PORTAL
  * - Gross Profit = Revenue - Total Costs
  * - Net Income = Gross Profit - Daily Expense
- * - Petty Cash New Balance = Pre Balance + Total Amount (Net Income)
+ * - Total Amount = Total Ticket + Credit Card Paid + Amer/Tahseel Cost + Net Income - Expense
+ * - Petty Cash New Balance = Current Balance + Total Amount
  * - Net Balance = Current Bank Balance - Petty Cash New Balance
  */
 export function calculateFinancials(
@@ -111,7 +113,9 @@ export function calculateFinancials(
   const validBankBalance = Number(currentBankBalance) || 0;
 
   const net_income = gross_profit - validExpenses;
-  const petty_new_balance = validPreBalance + net_income;
+  const total_amount =
+    total_cash_received + total_pay_card + total_amer_cost + gross_profit - validExpenses;
+  const petty_new_balance = validPreBalance + total_amount;
   const bank_net_balance = validBankBalance - petty_new_balance;
 
   return {
@@ -127,6 +131,7 @@ export function calculateFinancials(
     summary: {
       expenses: Number(validExpenses.toFixed(2)),
       net_income: Number(net_income.toFixed(2)),
+      total_amount: Number(total_amount.toFixed(2)),
       petty_cash: {
         pre_balance: Number(validPreBalance.toFixed(2)),
         new_balance: Number(petty_new_balance.toFixed(2)),
@@ -178,12 +183,19 @@ export function calculateDailySummary(
   const validPre = Number(preBalance) || 0;
   const validBank = Number(currentBankBalance) || 0;
   const net_income = totals.gross_profit - validExpenses;
-  const new_balance = validPre + net_income;
+  const total_amount =
+    totals.total_cash_received +
+    totals.total_pay_card +
+    totals.total_amer_cost +
+    totals.gross_profit -
+    validExpenses;
+  const new_balance = validPre + total_amount;
   const net_balance = validBank - new_balance;
 
   return {
     expenses: Number(validExpenses.toFixed(2)),
     net_income: Number(net_income.toFixed(2)),
+    total_amount: Number(total_amount.toFixed(2)),
     petty_cash: {
       pre_balance: Number(validPre.toFixed(2)),
       new_balance: Number(new_balance.toFixed(2)),

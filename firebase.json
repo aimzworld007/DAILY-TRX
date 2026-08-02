@@ -1,0 +1,8 @@
+{
+  "firestore": [
+    {
+      "database": "ai-studio-dailytraxhabatal-567e66a2-d59e-44bb-b67c-badd3ff98532",
+      "rules": "firestore.rules"
+    }
+  ]
+}

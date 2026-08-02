@@ -1,0 +1,9 @@
+"use client";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { KeyRound, LogOut, ShieldCheck, UsersRound } from "lucide-react";
+import { PageShell } from "@/components/PageShell";
+import { useAuth } from "@/components/AuthProvider";
+import { getFirebaseAuth } from "@/lib/firebase";
+export default function SettingsPage(){const {user}=useAuth();const router=useRouter();return <PageShell eyebrow="Account & workspace" title="Settings" description="Manage your signed-in account and review recommended administration features."><div className="surface-card p-6"><p className="text-xs font-bold uppercase text-slate-400">Signed-in account</p><p className="mt-2 font-black text-slate-900">{user?.displayName||"Daily Trax user"}</p><p className="text-sm text-slate-500">{user?.email}</p><button onClick={async()=>{await signOut(getFirebaseAuth());router.replace('/login')}} className="mt-5 flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2 text-sm font-bold text-rose-600"><LogOut className="h-4 w-4"/>Sign out</button></div><h2 className="mt-7 mb-3 font-black">Suggested next features</h2><div className="grid md:grid-cols-3 gap-4"><Suggestion icon={<UsersRound/>} title="Roles & approvals" text="Owner, manager and cashier access with approval for edits and deletions."/><Suggestion icon={<ShieldCheck/>} title="Audit trail" text="Record who changed each entry, what changed and when it happened."/><Suggestion icon={<KeyRound/>} title="Password recovery" text="Add forgot-password email and optional multi-factor authentication."/></div></PageShell>}
+function Suggestion({icon,title,text}:{icon:React.ReactNode;title:string;text:string}){return <div className="surface-card p-5"><span className="text-indigo-500 [&>svg]:h-6 [&>svg]:w-6">{icon}</span><p className="mt-3 font-black">{title}</p><p className="mt-1 text-sm leading-6 text-slate-500">{text}</p></div>}

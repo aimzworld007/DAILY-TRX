@@ -13,6 +13,7 @@ import {
   Firestore,
 } from "firebase/firestore";
 import { DailyRecord } from "@/types/financial";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAdxbjOZEj3FW86yM6sZdgynSB2mQxXhoQ",
@@ -28,9 +29,17 @@ const FIRESTORE_DB_ID =
 
 let dbInstance: Firestore | null = null;
 
+export function getFirebaseApp() {
+  return !getApps().length ? initializeApp(firebaseConfig) : getApp();
+}
+
+export function getFirebaseAuth() {
+  return getAuth(getFirebaseApp());
+}
+
 export function getDb(): Firestore {
   if (!dbInstance) {
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    const app = getFirebaseApp();
     try {
       dbInstance = getFirestore(app, FIRESTORE_DB_ID);
     } catch {
@@ -123,4 +132,3 @@ export async function fetchHistoryRecords(
 export const getDailyRecord = fetchDailyRecord;
 export const deleteDailyRecord = removeDailyRecord;
 export const getAllDailyRecords = fetchHistoryRecords;
-

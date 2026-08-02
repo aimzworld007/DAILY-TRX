@@ -1,0 +1,6 @@
+{
+  "name": "DAILY TRAX - Habat Al Rimal Typing",
+  "description": "Daily Financial Tracking Web Application for Habat Al Rimal Typing with real-time financial ledger, daily summaries, cost breakdowns, and Firestore persistence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

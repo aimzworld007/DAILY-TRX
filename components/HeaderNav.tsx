@@ -11,7 +11,6 @@ import {
   AlertCircle,
   FileSpreadsheet,
   Printer,
-  History,
   Save,
 } from "lucide-react";
 import { getTodayDateString } from "@/types/financial";
@@ -21,7 +20,6 @@ interface HeaderNavProps {
   onDateChange: (newDate: string) => void;
   syncStatus: "saved" | "saving" | "error" | "offline";
   lastSavedTime: string | null;
-  onOpenHistory: () => void;
   onOpenPrint: () => void;
   onExportCsv: () => void;
   onManualSave: () => void;
@@ -32,7 +30,6 @@ export function HeaderNav({
   onDateChange,
   syncStatus,
   lastSavedTime,
-  onOpenHistory,
   onOpenPrint,
   onExportCsv,
   onManualSave,
@@ -61,23 +58,6 @@ export function HeaderNav({
     <header className="sticky top-0 z-40 bg-white/95 text-slate-900 border-b border-slate-200 backdrop-blur-xl">
       <div className="app-shell px-4 sm:px-6">
         <div className="flex flex-wrap lg:flex-nowrap items-center justify-between min-h-18 py-3 gap-3">
-          {/* Brand & Typing Center Title */}
-          <div className="flex items-center gap-3 min-w-fit">
-            <div className="bg-linear-to-br from-indigo-500 to-violet-700 text-white rounded-xl shrink-0 flex items-center justify-center font-bold text-sm tracking-wider w-10 h-10 shadow-sm shadow-indigo-200">
-              HR
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
-                  Daily Trax
-                </h1>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium">
-                Habat Al Rimal Typing
-              </p>
-            </div>
-          </div>
-
           {/* Date Picker & Navigation Controls */}
           <div className="order-3 lg:order-none flex items-center gap-2 w-full lg:w-auto justify-center">
             <div className="flex items-center bg-slate-50 rounded-xl p-1 border border-slate-200 shadow-inner">
@@ -158,16 +138,6 @@ export function HeaderNav({
 
           {/* Toolbar Actions */}
           <div className="flex items-center gap-1.5 overflow-x-auto">
-            <button
-              type="button"
-              onClick={onOpenHistory}
-              title="View archived records in Firestore"
-              className="focus-ring flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors shrink-0"
-            >
-              <History className="w-3 h-3 text-slate-400" />
-              Archive
-            </button>
-
             <button
               type="button"
               onClick={onExportCsv}

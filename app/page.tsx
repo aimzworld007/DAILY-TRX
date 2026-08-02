@@ -16,6 +16,7 @@ import {
   getDailyRecord,
 } from "@/lib/firebase";
 import { HeaderNav } from "@/components/HeaderNav";
+import { SidebarNav } from "@/components/SidebarNav";
 import { SummaryCards } from "@/components/SummaryCards";
 import { TransactionTable } from "@/components/TransactionTable";
 import { ReconciliationPanel } from "@/components/ReconciliationPanel";
@@ -363,14 +364,17 @@ export default function HabatAlRimalDailyTraxPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen text-slate-900 font-sans antialiased">
+    <div className="min-h-screen text-slate-900 font-sans antialiased lg:pl-56">
+      <SidebarNav
+        onOpenHistory={handleOpenHistory}
+        onOpenPrint={() => setIsPrintOpen(true)}
+      />
       {/* 1. TOP STICKY HEADER & TOOLBAR */}
       <HeaderNav
         selectedDate={selectedDate}
         onDateChange={(newDate) => setSelectedDate(newDate)}
         syncStatus={syncStatus}
         lastSavedTime={lastSavedTime}
-        onOpenHistory={handleOpenHistory}
         onOpenPrint={() => setIsPrintOpen(true)}
         onExportCsv={handleExportCsv}
         onManualSave={() => saveCurrentRecord(true)}
@@ -397,15 +401,14 @@ export default function HabatAlRimalDailyTraxPage() {
       )}
 
       {/* 2. MAIN LEDGER WORKSPACE */}
-      <main className="flex-1 app-shell px-4 sm:px-6 w-full pb-12 space-y-5">
-        <div className="pt-7 pb-1 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+      <main className="app-shell px-4 sm:px-6 w-full pb-24 lg:pb-12 space-y-5">
+        <div id="overview" className="scroll-mt-24 pt-7 pb-1 flex items-end justify-between gap-2">
           <div>
-            <p className="text-xs font-semibold text-indigo-600 mb-1">Financial workspace</p>
-            <h2 className="text-2xl sm:text-[28px] font-bold tracking-tight text-slate-900">Daily overview</h2>
-            <p className="text-sm text-slate-500 mt-1">Record transactions, review profit, and reconcile balances in one place.</p>
+            <p className="text-xs font-semibold text-indigo-600 mb-1">Workspace</p>
+            <h2 className="text-2xl sm:text-[28px] font-bold tracking-tight text-slate-900">Overview</h2>
           </div>
-          <div className="text-xs text-slate-500 bg-white border border-slate-200 rounded-full px-3 py-1.5 shadow-xs">
-            Changes save automatically
+          <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" /> Auto-save
           </div>
         </div>
         {/* KPI Summary Cards & Daily Formula Breakdown Banner */}
@@ -417,24 +420,28 @@ export default function HabatAlRimalDailyTraxPage() {
         />
 
         {/* Transaction Spreadsheet Ledger Table */}
-        <TransactionTable
-          lineItems={lineItems}
-          totals={totals}
-          onAddRow={handleAddRow}
-          onUpdateRow={handleUpdateRow}
-          onDeleteRow={handleDeleteRow}
-          onDuplicateRow={handleDuplicateRow}
-          onMoveRow={handleMoveRow}
-          onClearAll={handleClearAllRows}
-          onRenumberSn={handleRenumberSn}
-        />
+        <div id="transactions" className="scroll-mt-24">
+          <TransactionTable
+            lineItems={lineItems}
+            totals={totals}
+            onAddRow={handleAddRow}
+            onUpdateRow={handleUpdateRow}
+            onDeleteRow={handleDeleteRow}
+            onDuplicateRow={handleDuplicateRow}
+            onMoveRow={handleMoveRow}
+            onClearAll={handleClearAllRows}
+            onRenumberSn={handleRenumberSn}
+          />
+        </div>
 
         {/* Petty Cash & Bank Reconciliation Formula Panel */}
-        <ReconciliationPanel
-          summary={summary}
-          onPreBalanceChange={(val) => setPreBalance(val)}
-          onCurrentBankBalanceChange={(val) => setCurrentBankBalance(val)}
-        />
+        <div id="reconciliation" className="scroll-mt-24">
+          <ReconciliationPanel
+            summary={summary}
+            onPreBalanceChange={(val) => setPreBalance(val)}
+            onCurrentBankBalanceChange={(val) => setCurrentBankBalance(val)}
+          />
+        </div>
       </main>
 
       {/* 3. ARCHIVE HISTORY MODAL */}

@@ -6,7 +6,6 @@ import {
   DailyRecord,
   DailyTotals,
   DailySummary,
-  ServicePreset,
   getTodayDateString,
   calculateDailyTotals,
   calculateDailySummary,
@@ -31,8 +30,8 @@ export default function HabatAlRimalDailyTraxPage() {
   // 2. Core Financial State
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [expenses, setExpenses] = useState<number>(0);
-  const [preBalance, setPreBalance] = useState<number>(5000); // default starting cash box
-  const [currentBankBalance, setCurrentBankBalance] = useState<number>(25000);
+  const [preBalance, setPreBalance] = useState<number>(0);
+  const [currentBankBalance, setCurrentBankBalance] = useState<number>(0);
 
   // 3. UI & Modal states
   const [syncStatus, setSyncStatus] = useState<"saved" | "saving" | "error" | "offline">("saved");
@@ -77,9 +76,9 @@ export default function HabatAlRimalDailyTraxPage() {
       if (remoteRecord) {
         setLineItems(remoteRecord.line_items || []);
         setExpenses(remoteRecord.summary?.expenses || 0);
-        setPreBalance(remoteRecord.summary?.petty_cash?.pre_balance ?? 5000);
+        setPreBalance(remoteRecord.summary?.petty_cash?.pre_balance ?? 0);
         setCurrentBankBalance(
-          remoteRecord.summary?.bank_balance?.current_balance ?? 25000
+          remoteRecord.summary?.bank_balance?.current_balance ?? 0
         );
         setSyncStatus("saved");
         return;
@@ -93,9 +92,9 @@ export default function HabatAlRimalDailyTraxPage() {
           const parsed: DailyRecord = JSON.parse(cached);
           setLineItems(parsed.line_items || []);
           setExpenses(parsed.summary?.expenses || 0);
-          setPreBalance(parsed.summary?.petty_cash?.pre_balance ?? 5000);
+          setPreBalance(parsed.summary?.petty_cash?.pre_balance ?? 0);
           setCurrentBankBalance(
-            parsed.summary?.bank_balance?.current_balance ?? 25000
+            parsed.summary?.bank_balance?.current_balance ?? 0
           );
           setSyncStatus("saved");
           return;
@@ -108,8 +107,8 @@ export default function HabatAlRimalDailyTraxPage() {
       const initialLine = createEmptyLineItem(1);
       setLineItems([initialLine]);
       setExpenses(0);
-      setPreBalance(5000);
-      setCurrentBankBalance(25000);
+      setPreBalance(0);
+      setCurrentBankBalance(0);
       setSyncStatus("saved");
     } catch (error) {
       console.warn("Firestore offline or inaccessible, switching to Local Mode:", error);
@@ -122,9 +121,9 @@ export default function HabatAlRimalDailyTraxPage() {
           const parsed: DailyRecord = JSON.parse(cached);
           setLineItems(parsed.line_items || []);
           setExpenses(parsed.summary?.expenses || 0);
-          setPreBalance(parsed.summary?.petty_cash?.pre_balance ?? 5000);
+          setPreBalance(parsed.summary?.petty_cash?.pre_balance ?? 0);
           setCurrentBankBalance(
-            parsed.summary?.bank_balance?.current_balance ?? 25000
+            parsed.summary?.bank_balance?.current_balance ?? 0
           );
           return;
         } catch {
@@ -133,8 +132,8 @@ export default function HabatAlRimalDailyTraxPage() {
       }
       setLineItems([createEmptyLineItem(1)]);
       setExpenses(0);
-      setPreBalance(5000);
-      setCurrentBankBalance(25000);
+      setPreBalance(0);
+      setCurrentBankBalance(0);
     }
   }, []);
 
@@ -207,22 +206,9 @@ export default function HabatAlRimalDailyTraxPage() {
   }, [notification]);
 
   // 7. CRUD Operations for Line Items
-  const handleAddRow = (preset?: ServicePreset) => {
+  const handleAddRow = () => {
     const nextSN = lineItems.length + 1;
     const newRow = createEmptyLineItem(nextSN);
-    if (preset) {
-      newRow.description = preset.label;
-      newRow.cash_received = preset.defaultRevenue;
-      newRow.amer_cost = preset.defaultAmer;
-      newRow.pay_card = preset.defaultPayCard;
-      newRow.portal_cost = preset.defaultPortal;
-      newRow.net_profit = Number(
-        (
-          preset.defaultRevenue -
-          (preset.defaultAmer + preset.defaultPayCard + preset.defaultPortal)
-        ).toFixed(2)
-      );
-    }
     setLineItems((prev) => [...prev, newRow]);
   };
 
@@ -312,81 +298,6 @@ export default function HabatAlRimalDailyTraxPage() {
     }
   };
 
-  // 8. Demo Data Loader (Habat Al Rimal Typing services sample)
-  const handleLoadDemoDay = () => {
-    const demoItems: LineItem[] = [
-      {
-        id: "demo_1",
-        sn: 1,
-        description: "Amer Family Visa Sponsorship (2 Years)",
-        cash_received: 1450.0,
-        amer_cost: 820.0,
-        pay_card: 310.0,
-        portal_cost: 50.0,
-        net_profit: 270.0,
-      },
-      {
-        id: "demo_2",
-        sn: 2,
-        description: "Emirates ID Biometric New Application",
-        cash_received: 385.0,
-        amer_cost: 270.0,
-        pay_card: 15.0,
-        portal_cost: 20.0,
-        net_profit: 80.0,
-      },
-      {
-        id: "demo_3",
-        sn: 3,
-        description: "Tasheel Labour Work Permit Renewal",
-        cash_received: 850.0,
-        amer_cost: 530.0,
-        pay_card: 110.0,
-        portal_cost: 40.0,
-        net_profit: 170.0,
-      },
-      {
-        id: "demo_4",
-        sn: 4,
-        description: "Dubai Health Medical Fitness Test Clearing",
-        cash_received: 330.0,
-        amer_cost: 210.0,
-        pay_card: 10.0,
-        portal_cost: 25.0,
-        net_profit: 85.0,
-      },
-      {
-        id: "demo_5",
-        sn: 5,
-        description: "Amer Entry Permit Change Status",
-        cash_received: 680.0,
-        amer_cost: 460.0,
-        pay_card: 45.0,
-        portal_cost: 30.0,
-        net_profit: 145.0,
-      },
-      {
-        id: "demo_6",
-        sn: 6,
-        description: "PRO Document Attestation & Typing Fee",
-        cash_received: 250.0,
-        amer_cost: 0.0,
-        pay_card: 0.0,
-        portal_cost: 10.0,
-        net_profit: 240.0,
-      },
-    ];
-
-    setLineItems(demoItems);
-    setExpenses(165.0); // Daily tea, stationery, office overhead
-    setPreBalance(5200.0);
-    setCurrentBankBalance(28450.0);
-    setNotification({
-      type: "success",
-      message: "Loaded sample Habat Al Rimal Typing transactions successfully.",
-    });
-  };
-
   // 9. CSV Export Utility
   const handleExportCsv = () => {
     if (lineItems.length === 0) return;
@@ -451,7 +362,6 @@ export default function HabatAlRimalDailyTraxPage() {
         onOpenHistory={handleOpenHistory}
         onOpenPrint={() => setIsPrintOpen(true)}
         onExportCsv={handleExportCsv}
-        onLoadDemo={handleLoadDemoDay}
         onManualSave={() => saveCurrentRecord(true)}
       />
 

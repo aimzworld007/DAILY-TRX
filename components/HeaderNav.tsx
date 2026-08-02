@@ -12,7 +12,6 @@ import {
   FileSpreadsheet,
   Printer,
   History,
-  Sparkles,
   Save,
   Building2,
 } from "lucide-react";
@@ -26,7 +25,6 @@ interface HeaderNavProps {
   onOpenHistory: () => void;
   onOpenPrint: () => void;
   onExportCsv: () => void;
-  onLoadDemo: () => void;
   onManualSave: () => void;
 }
 
@@ -38,7 +36,6 @@ export function HeaderNav({
   onOpenHistory,
   onOpenPrint,
   onExportCsv,
-  onLoadDemo,
   onManualSave,
 }: HeaderNavProps) {
   const isToday = selectedDate === getTodayDateString();
@@ -164,16 +161,6 @@ export function HeaderNav({
 
           {/* Toolbar Actions */}
           <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-            <button
-              type="button"
-              onClick={onLoadDemo}
-              title="Load sample Typing Center transactions for demo/testing"
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded text-[11px] font-bold uppercase tracking-wider text-amber-300 bg-amber-950/60 border border-amber-800/80 hover:bg-amber-900/80 transition-colors shrink-0"
-            >
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              Demo
-            </button>
-
             <button
               type="button"
               onClick={onOpenHistory}

@@ -7,8 +7,6 @@ import {
   Copy,
   ArrowUp,
   ArrowDown,
-  Sparkles,
-  ChevronDown,
   HelpCircle,
   AlertCircle,
   Banknote,
@@ -18,17 +16,12 @@ import {
   SlidersHorizontal,
   RotateCcw,
 } from "lucide-react";
-import {
-  LineItem,
-  DailyTotals,
-  TYPING_SERVICE_PRESETS,
-  ServicePreset,
-} from "@/types/financial";
+import { LineItem, DailyTotals } from "@/types/financial";
 
 interface TransactionTableProps {
   lineItems: LineItem[];
   totals: DailyTotals;
-  onAddRow: (preset?: ServicePreset) => void;
+  onAddRow: () => void;
   onUpdateRow: (id: string, updated: Partial<LineItem>) => void;
   onDeleteRow: (id: string) => void;
   onDuplicateRow: (id: string) => void;
@@ -48,7 +41,6 @@ export function TransactionTable({
   onClearAll,
   onRenumberSn,
 }: TransactionTableProps) {
-  const [showPresetDropdown, setShowPresetDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -107,47 +99,6 @@ export function TransactionTable({
                 Renumber S.N
               </button>
             )}
-
-            {/* Quick Service Presets Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowPresetDropdown(!showPresetDropdown)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-800 bg-emerald-100/80 hover:bg-emerald-100 border border-emerald-300 transition-colors flex items-center gap-1.5 shadow-xs"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-                Quick Service Preset
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-
-              {showPresetDropdown && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-2 max-h-80 overflow-y-auto">
-                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
-                    Habat Al Rimal Typing Presets
-                  </div>
-                  {TYPING_SERVICE_PRESETS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        onAddRow(preset);
-                        setShowPresetDropdown(false);
-                      }}
-                      className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-emerald-50 text-slate-700 transition-colors flex flex-col gap-0.5 border-b border-slate-100 last:border-none"
-                    >
-                      <div className="font-bold text-slate-800">
-                        {preset.label}
-                      </div>
-                      <div className="flex items-center justify-between text-[11px] text-slate-500">
-                        <span>Rev: AED {preset.defaultRevenue}</span>
-                        <span>Amer: {preset.defaultAmer}</span>
-                        <span>Portal: {preset.defaultPortal}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
 
             {/* Add New Blank Row Button */}
             <button

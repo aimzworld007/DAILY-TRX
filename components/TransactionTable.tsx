@@ -45,7 +45,7 @@ export function TransactionTable({
 }: TransactionTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const [showAddTransaction, setShowAddTransaction] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("add") === "1");
   const [transactionType, setTransactionType] = useState<
     "cash" | "amer" | "pay_card" | "portal"
   >("cash");
@@ -77,7 +77,9 @@ export function TransactionTable({
       portal_cost: transactionType === "portal" ? costAmount : 0,
       category: transactionType,
     });
-    setShowAddTransaction(false);
+    setDescription("");
+    setCashReceived("");
+    setServiceCost("");
   };
 
   const filteredItems = lineItems.filter(
@@ -105,9 +107,7 @@ export function TransactionTable({
               title="Line Item Formula: Net Profit = Cash Received - (Amer Cost + Pay Card + PORTAL)"
             >
               <HelpCircle className="w-3.5 h-3.5 text-emerald-600" />
-              <span>
-                Net Profit = Cash (+) − [Amer + Card + Portal] (−)
-              </span>
+
             </div>
           </div>
 
@@ -595,9 +595,6 @@ export function TransactionTable({
           role="dialog"
           aria-modal="true"
           aria-labelledby="add-transaction-title"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setShowAddTransaction(false);
-          }}
         >
           <form
             onSubmit={submitTransaction}

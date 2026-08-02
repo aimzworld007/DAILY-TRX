@@ -1,21 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import {
-  LineItem,
-  DailyRecord,
-  DailyTotals,
-  DailySummary,
-  getTodayDateString,
-  calculateDailyTotals,
-  calculateDailySummary,
-  createEmptyLineItem,
-} from "@/types/financial";
-import {
-  saveDailyRecord,
-  getDailyRecord,
-} from "@/lib/firebase";
-import { HeaderNav } from "@/components/HeaderNav";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowUpRight, Banknote, CircleHelp, CreditCard, Globe2, Plus, ReceiptText, TrendingUp, WalletCards } from "lucide-react";
 import { SidebarNav } from "@/components/SidebarNav";
 import { SummaryCards } from "@/components/SummaryCards";
 import { TransactionTable } from "@/components/TransactionTable";
@@ -24,13 +11,7 @@ import { PrintReportModal } from "@/components/PrintReportModal";
 import { DailyCopySummary } from "@/components/DailyCopySummary";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
-export default function HabatAlRimalDailyTraxPage() {
-  // 1. Current Selected Date (default: today YYYY-MM-DD)
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    if (typeof window === "undefined") return getTodayDateString();
-    const requestedDate = new URLSearchParams(window.location.search).get("date");
-    return requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : getTodayDateString();
-  });
+const zeroTotals: DailyTotals = { total_cash_received: 0, total_amer_cost: 0, total_pay_card: 0, total_portal_cost: 0, total_net_profit: 0, total_costs: 0, gross_profit: 0 };
 
   // 2. Core Financial State
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
@@ -94,6 +75,10 @@ export default function HabatAlRimalDailyTraxPage() {
       }
     };
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    let local: DailyRecord | null = null;
+    try { const raw = localStorage.getItem(`dailytrax_record_${today}`); local = raw ? JSON.parse(raw) : null; } catch { /* ignore invalid cache */ }
     try {
       setSyncStatus("saving");
       const remoteRecord = await getDailyRecord(dateStr);

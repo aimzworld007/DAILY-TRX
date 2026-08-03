@@ -25,12 +25,12 @@ export interface DailySummary {
   net_income: number;        // Gross Profit - Expenses
   total_amount: number;      // Ticket + Card Paid + Amer/Tahseel + Gross Profit - Expense
   petty_cash: {
-    pre_balance: number;     // User-entered current petty cash balance
-    new_balance: number;     // Current Balance + Total Amount
+    pre_balance: number;     // User-entered previous day's petty cash balance
+    new_balance: number;     // Pre Balance + Total Amount
   };
   bank_balance: {
-    current_balance: number;
-    net_balance: number;     // Current Bank Balance - New Petty Cash Balance
+    current_balance: number; // User-entered cash physically counted today
+    net_balance: number;     // Current Balance - New Balance
   };
 }
 
@@ -71,8 +71,8 @@ export function calculateLineProfit(item: {
  * - Gross Profit = Revenue - Total Costs
  * - Net Income = Gross Profit - Daily Expense
  * - Total Amount = Total Ticket + Credit Card Paid + Amer/Tahseel Cost + Net Income - Expense
- * - Petty Cash New Balance = Current Balance + Total Amount
- * - Net Balance = Current Bank Balance - Petty Cash New Balance
+ * - New Balance = Pre Balance + Total Amount
+ * - Net Balance = Current Balance - New Balance
  */
 export function calculateFinancials(
   lineItems: LineItem[],

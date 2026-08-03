@@ -58,7 +58,7 @@ export function ReconciliationPanel({
                 Petty cash
               </span>
               <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
-                Current Balance + Total Amount = Petty Cash
+                Pre Balance + Total Amount = New Balance
               </span>
             </div>
 
@@ -66,7 +66,7 @@ export function ReconciliationPanel({
               {/* Current petty cash balance input */}
               <div className="flex flex-col">
                 <label className="text-[10px] font-bold text-slate-500 uppercase font-sans">
-                  Current Balance
+                  Pre Balance
                 </label>
                 <div className="flex items-center mt-1">
                   <span className="text-xs font-bold text-slate-400 mr-1">AED</span>
@@ -104,7 +104,7 @@ export function ReconciliationPanel({
               <div className="flex flex-col sm:text-right">
                 <div className="flex items-center sm:justify-end gap-1 text-slate-500 text-[10px] font-bold uppercase font-sans">
                   <Equal className="w-3 h-3 text-emerald-600" />
-                  <span>Petty Cash</span>
+                  <span>New Balance</span>
                 </div>
                 <div className="text-base font-bold text-emerald-700 mt-1">
                   AED {summary.petty_cash.new_balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
@@ -118,10 +118,10 @@ export function ReconciliationPanel({
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 font-sans">
                 <Landmark className="w-3.5 h-3.5 text-indigo-600" />
-                Bank account
+                Cash count
               </span>
               <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
-                Current Bank - Petty New Balance = Net Balance
+                Current Balance - New Balance = Net Balance
               </span>
             </div>
 
@@ -129,7 +129,7 @@ export function ReconciliationPanel({
               {/* Current Bank Balance Input */}
               <div className="flex flex-col">
                 <label className="text-[10px] font-bold text-slate-500 uppercase font-sans">
-                  Current Bank Balance
+                  Current Balance
                 </label>
                 <div className="flex items-center mt-1">
                   <span className="text-xs font-bold text-slate-400 mr-1">AED</span>
@@ -147,7 +147,7 @@ export function ReconciliationPanel({
                       const val = parseFloat(e.target.value);
                       onCurrentBankBalanceChange(isNaN(val) ? 0 : val);
                     }}
-                    className="w-full text-sm font-bold text-slate-900 bg-slate-50 px-2 py-1 rounded border border-slate-300 focus:border-indigo-600 focus:bg-white focus:outline-hidden"
+                    className="w-full text-sm font-bold text-emerald-900 bg-emerald-50 px-2 py-1 rounded border border-emerald-300 focus:border-emerald-600 focus:bg-white focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -156,7 +156,7 @@ export function ReconciliationPanel({
               <div className="flex flex-col items-center justify-center py-2 sm:py-0 border-t sm:border-t-0 sm:border-l sm:border-r border-slate-100">
                 <div className="flex items-center gap-1 text-slate-500 text-[10px] font-bold uppercase font-sans">
                   <Minus className="w-3 h-3 text-amber-600" />
-                  <span>Petty Cash Box</span>
+                  <span>New Balance</span>
                 </div>
                 <div className="text-sm font-bold text-amber-700 mt-1">
                   AED {summary.petty_cash.new_balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}

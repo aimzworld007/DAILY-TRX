@@ -23,7 +23,7 @@ export interface DailyTotals {
 export interface DailySummary {
   expenses: number;
   net_income: number;        // Gross Profit - Expenses
-  total_amount: number;      // Ticket + Card Paid + Amer/Tahseel + Gross Profit - Expense
+  total_amount: number;      // Net Ticket + Card Paid + Amer/Tahseel + Net Income
   petty_cash: {
     pre_balance: number;     // User-entered previous day's petty cash balance
     new_balance: number;     // Pre Balance + Total Amount
@@ -64,13 +64,13 @@ export function calculateLineProfit(item: {
 
 /**
  * Performs all daily summary formulas according to Habat Al Rimal rules:
- * - Total Ticket / Revenue = Sum of Cash Received
+ * - Total Net Ticket = Sum of Portal / ticket net prices
  * - Credit Card Paid = Sum of Pay Card
  * - Amer/Tahseel Cost = Sum of Amer Cost
  * - Total Costs = Amer Cost + Pay Card + PORTAL
  * - Gross Profit = Revenue - Total Costs
  * - Net Income = Gross Profit - Daily Expense
- * - Total Amount = Total Ticket + Credit Card Paid + Amer/Tahseel Cost + Net Income - Expense
+ * - Total Amount = Total Net Ticket + Credit Card Paid + Amer/Tahseel Cost + Net Income
  * - New Balance = Pre Balance + Total Amount
  * - Net Balance = Current Balance - New Balance
  */
@@ -114,7 +114,7 @@ export function calculateFinancials(
 
   const net_income = gross_profit - validExpenses;
   const total_amount =
-    total_cash_received + total_pay_card + total_amer_cost + gross_profit - validExpenses;
+    total_portal_cost + total_pay_card + total_amer_cost + net_income;
   const petty_new_balance = validPreBalance + total_amount;
   const bank_net_balance = validBankBalance - petty_new_balance;
 
@@ -184,11 +184,10 @@ export function calculateDailySummary(
   const validBank = Number(currentBankBalance) || 0;
   const net_income = totals.gross_profit - validExpenses;
   const total_amount =
-    totals.total_cash_received +
+    totals.total_portal_cost +
     totals.total_pay_card +
     totals.total_amer_cost +
-    totals.gross_profit -
-    validExpenses;
+    net_income;
   const new_balance = validPre + total_amount;
   const net_balance = validBank - new_balance;
 

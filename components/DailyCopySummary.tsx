@@ -10,7 +10,7 @@ import {
   ReceiptText,
   WalletCards,
 } from "lucide-react";
-import { calculateLineProfit, DailySummary, LineItem } from "@/types/financial";
+import { calculateDailyTotals, DailySummary, LineItem } from "@/types/financial";
 
 interface DailyCopySummaryProps {
   date: string;
@@ -58,37 +58,24 @@ export function DailyCopySummary({ date, lineItems, summary }: DailyCopySummaryP
   const [copiedSection, setCopiedSection] = useState<"main" | "petty" | null>(null);
 
   const dailyBreakdown = useMemo(() => {
-    const result = {
-      tickets: [] as { label: string; value: number }[],
-      netTicket: 0,
-      netCreditCard: 0,
-      netAmer: 0,
-      totalIncome: 0,
+    const totals = calculateDailyTotals(lineItems);
+    const tickets = lineItems
+      .filter((item) => Number(item.portal_cost) !== 0)
+      .map((item) => ({
+        label: item.description.trim() || `Ticket ${item.sn}`,
+        value: Number(item.portal_cost) || 0,
+      }));
+
+    return {
+      tickets,
+      netTicket: totals.total_portal_cost,
+      netCreditCard: totals.total_pay_card,
+      netAmer: totals.total_amer_cost,
+      grossIncome: totals.gross_profit,
     };
-
-    lineItems.forEach((item) => {
-      const net = calculateLineProfit(item);
-      // Older saved rows may not have a category, so infer it from their cost column.
-      const category = item.category || (item.pay_card ? "pay_card" : item.amer_cost ? "amer" : item.portal_cost ? "portal" : "cash");
-
-      if (category === "pay_card") result.netCreditCard += net;
-      else if (category === "amer") result.netAmer += net;
-      else if (category === "portal") result.totalIncome += net;
-      else {
-        result.netTicket += net;
-        if (item.cash_received !== 0) {
-          result.tickets.push({
-            label: item.description.trim() || `Ticket ${item.sn}`,
-            value: net,
-          });
-        }
-      }
-    });
-
-    return result;
   }, [lineItems]);
 
-  const netIncome = dailyBreakdown.totalIncome - summary.expenses;
+  const netIncome = dailyBreakdown.grossIncome - summary.expenses;
   const dailyTotalAmount =
     dailyBreakdown.netTicket + dailyBreakdown.netCreditCard + dailyBreakdown.netAmer + netIncome;
   const dailyPettyCash = summary.petty_cash.pre_balance + dailyTotalAmount;

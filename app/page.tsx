@@ -39,11 +39,16 @@ export default function OverviewPage() {
     record?.summary?.petty_cash?.pre_balance || 0,
     record?.summary?.bank_balance?.current_balance || 0
   );
-  const addTransaction = async (values: Omit<LineItem, "id" | "sn" | "net_profit">) => {
-    const item: LineItem = { ...values, id: `row_${Date.now()}`, sn: (record?.line_items?.length || 0) + 1, net_profit: calculateLineProfit(values) };
-    const lineItems = [...(record?.line_items || []), item];
+  const addTransaction = async (
+    values: Omit<LineItem, "id" | "sn" | "net_profit"> | null,
+    balances: { expenses: number; preBalance: number; currentBalance: number }
+  ) => {
+    const lineItems = [...(record?.line_items || [])];
+    if (values) {
+      lineItems.push({ ...values, id: `row_${Date.now()}`, sn: lineItems.length + 1, net_profit: calculateLineProfit(values) });
+    }
     const nextTotals = calculateDailyTotals(lineItems);
-    const nextSummary = calculateDailySummary(nextTotals, summary.expenses, summary.petty_cash.pre_balance, summary.bank_balance.current_balance);
+    const nextSummary = calculateDailySummary(nextTotals, balances.expenses, balances.preBalance, balances.currentBalance);
     const nextRecord: DailyRecord = { date: today, line_items: lineItems, totals: nextTotals, summary: nextSummary, created_at: record?.created_at || new Date().toISOString(), updated_at: new Date().toISOString() };
     setRecord(nextRecord);
     localStorage.setItem(`dailytrax_record_${today}`, JSON.stringify(nextRecord));
@@ -65,6 +70,6 @@ export default function OverviewPage() {
       <section aria-label="Daily performance" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{kpis.map(({label,value,ratio:share,icon:Icon,tone,help}) => <article key={label} className="surface-card p-5"><div className="flex items-center justify-between"><span className={`grid h-9 w-9 place-items-center rounded-xl ${tone}`}><Icon className="h-4 w-4"/></span><button type="button" title={help} aria-label={`About ${label}`} className="text-slate-400 hover:text-indigo-600"><CircleHelp className="h-4 w-4"/></button></div><p className="mt-5 text-xs font-bold uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 text-2xl font-black tracking-tight">AED {value.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</p>{share !== undefined && <div className="mt-3 flex items-center gap-3"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-indigo-500" style={{width:`${Math.min(share,100)}%`}}/></div><span className="text-xs font-bold text-slate-500">{share.toFixed(1)}%</span></div>}</article>)}</section>
       <section className="mt-6 surface-card overflow-hidden"><div className="flex items-center justify-between border-b border-slate-100 px-5 py-4"><h2 className="font-black">Recent days</h2><Link href="/history" className="text-xs font-bold text-indigo-600">View history</Link></div><div className="divide-y divide-slate-100">{!loading && recent.length===0 && <p className="p-8 text-center text-sm text-slate-400">No saved activity</p>}{recent.map(item => <Link key={item.date} href={`/transactions?date=${item.date}`} className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"><div><p className="text-sm font-bold">{new Date(`${item.date}T00:00:00`).toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"})}</p><p className="text-xs text-slate-400">{item.line_items?.length || 0} transactions</p></div><div className="flex items-center gap-3"><p className="text-right text-sm font-black">AED {(item.totals?.total_cash_received || 0).toFixed(2)}</p><ArrowUpRight className="h-4 w-4 text-slate-400"/></div></Link>)}</div></section>
     </main>
-    <OverviewTransactionFab onAdd={addTransaction}/>
+    <OverviewTransactionFab onAdd={addTransaction} summary={summary}/>
   </div>;
 }

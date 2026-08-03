@@ -41,7 +41,7 @@ export default function SummaryPage() {
     { label: "Gross revenue", value: totals.total_cash_received, note: `${record?.line_items?.length || 0} transactions`, icon: TrendingUp, tone: "text-emerald-600 bg-emerald-50" },
     { label: "Direct costs", value: totals.total_costs, note: "Amer, card & portal", icon: Receipt, tone: "text-rose-600 bg-rose-50" },
     { label: "Gross profit", value: totals.gross_profit, note: "Revenue minus costs", icon: Wallet, tone: "text-indigo-600 bg-indigo-50" },
-    { label: "Total amount", value: summary.total_amount, note: "Ticket + card + Amer + net income − expense", icon: Landmark, tone: summary.total_amount >= 0 ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50" },
+    { label: "Total amount", value: summary.total_amount, note: "Net ticket + card + Amer + net income", icon: Landmark, tone: summary.total_amount >= 0 ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50" },
   ];
 
   return <PageShell eyebrow="Daily performance" title="Summary" description="Review the complete financial summary for any ledger date.">

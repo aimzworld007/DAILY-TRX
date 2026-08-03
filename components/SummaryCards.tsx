@@ -117,21 +117,15 @@ export function SummaryCards({
             Today’s total amount
           </h3>
           <p className="text-xs text-slate-400 font-sans">
-            Total Ticket + Credit Card Paid + Amer/Tahseel Cost + Net Income − Expense.
+            Net Ticket + Credit Card Paid + Amer/Tahseel Cost + Net Income.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-6 font-mono text-sm border-t md:border-t-0 border-slate-800 pt-3 md:pt-0">
           <div className="flex flex-col">
-            <span className="text-slate-400 text-[10px] uppercase">Ticket + Card + Amer + Net Income</span>
+            <span className="text-slate-400 text-[10px] uppercase">Net Ticket + Card + Amer + Net Income</span>
             <span className="text-indigo-200 font-bold">
-              + AED {(totals.total_cash_received + totals.total_pay_card + totals.total_amer_cost + totals.gross_profit).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-slate-400 text-[10px] uppercase">Daily Expenses</span>
-            <span className="text-rose-400 font-bold">
-              - AED {summary.expenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              AED {(totals.total_portal_cost + totals.total_pay_card + totals.total_amer_cost + summary.net_income).toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </span>
           </div>
           <div className="flex items-center gap-3 bg-white/10 px-5 py-3 rounded-xl border border-white/10">

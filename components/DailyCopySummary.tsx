@@ -10,12 +10,11 @@ import {
   ReceiptText,
   WalletCards,
 } from "lucide-react";
-import { DailySummary, DailyTotals, LineItem } from "@/types/financial";
+import { calculateLineProfit, DailySummary, LineItem } from "@/types/financial";
 
 interface DailyCopySummaryProps {
   date: string;
   lineItems: LineItem[];
-  totals: DailyTotals;
   summary: DailySummary;
 }
 
@@ -55,23 +54,49 @@ function CopyButton({ copied, onClick }: { copied: boolean; onClick: () => void 
   );
 }
 
-export function DailyCopySummary({ date, lineItems, totals, summary }: DailyCopySummaryProps) {
+export function DailyCopySummary({ date, lineItems, summary }: DailyCopySummaryProps) {
   const [copiedSection, setCopiedSection] = useState<"main" | "petty" | null>(null);
 
-  const ticketDetails = useMemo(
-    () =>
-      lineItems
-        .filter((item) => item.cash_received !== 0)
-        .map((item) => ({
-          label: item.description.trim() || `Ticket ${item.sn}`,
-          value: item.cash_received,
-        })),
-    [lineItems]
-  );
+  const dailyBreakdown = useMemo(() => {
+    const result = {
+      tickets: [] as { label: string; value: number }[],
+      netTicket: 0,
+      netCreditCard: 0,
+      netAmer: 0,
+      totalIncome: 0,
+    };
+
+    lineItems.forEach((item) => {
+      const net = calculateLineProfit(item);
+      // Older saved rows may not have a category, so infer it from their cost column.
+      const category = item.category || (item.pay_card ? "pay_card" : item.amer_cost ? "amer" : item.portal_cost ? "portal" : "cash");
+
+      if (category === "pay_card") result.netCreditCard += net;
+      else if (category === "amer") result.netAmer += net;
+      else if (category === "portal") result.totalIncome += net;
+      else {
+        result.netTicket += net;
+        if (item.cash_received !== 0) {
+          result.tickets.push({
+            label: item.description.trim() || `Ticket ${item.sn}`,
+            value: net,
+          });
+        }
+      }
+    });
+
+    return result;
+  }, [lineItems]);
+
+  const netIncome = dailyBreakdown.totalIncome - summary.expenses;
+  const dailyTotalAmount =
+    dailyBreakdown.netTicket + dailyBreakdown.netCreditCard + dailyBreakdown.netAmer + netIncome;
+  const dailyPettyCash = summary.petty_cash.pre_balance + dailyTotalAmount;
+  const dailyNetBalance = summary.bank_balance.current_balance - dailyPettyCash;
 
   const mainSummaryText = useMemo(() => {
-    const ticketLines = ticketDetails.map(
-      (item, index) => `${item.label} = ${money(item.value)}${index < ticketDetails.length - 1 ? "," : ""}`
+    const ticketLines = dailyBreakdown.tickets.map(
+      (item, index) => `${item.label} = ${money(item.value)}${index < dailyBreakdown.tickets.length - 1 ? "," : ""}`
     );
 
     return [
@@ -80,27 +105,27 @@ export function DailyCopySummary({ date, lineItems, totals, summary }: DailyCopy
       "",
       ...ticketLines,
       ...(ticketLines.length ? [""] : []),
-      `Total Ticket = ${money(totals.total_cash_received)}`,
-      `Credit Card Paid = ${money(totals.total_pay_card)}`,
-      `Amer/Tahseel Cost = ${money(totals.total_amer_cost)}`,
-      `Net Income = ${money(totals.gross_profit)}`,
+      `Total Net Ticket = ${money(dailyBreakdown.netTicket)}`,
+      `Net Credit Card = ${money(dailyBreakdown.netCreditCard)}`,
+      `Net Amer/Tahseel Cost = ${money(dailyBreakdown.netAmer)}`,
+      `Net Income = ${money(netIncome)}`,
       `Expense = ${money(summary.expenses)}`,
-      `Total Amount = ${money(summary.total_amount)}`,
+      `Total Amount = ${money(dailyTotalAmount)}`,
     ].join("\n");
-  }, [date, ticketDetails, summary.expenses, summary.total_amount, totals]);
+  }, [date, dailyBreakdown, dailyTotalAmount, netIncome, summary.expenses]);
 
   const pettyCashSummaryText = useMemo(
     () =>
       [
         "PETTY CASH SUMMARY:",
         `Current Balance = ${money(summary.petty_cash.pre_balance)}`,
-        `Total Amount = ${money(summary.total_amount)}`,
-        `Petty Cash = ${money(summary.petty_cash.new_balance)}`,
+        `Total Amount = ${money(dailyTotalAmount)}`,
+        `Petty Cash = ${money(dailyPettyCash)}`,
         "",
         `Current Bank Balance = ${money(summary.bank_balance.current_balance)}`,
-        `Net Balance = ${money(summary.bank_balance.net_balance)}`,
+        `Net Balance = ${money(dailyNetBalance)}`,
       ].join("\n"),
-    [summary]
+    [dailyNetBalance, dailyPettyCash, dailyTotalAmount, summary]
   );
 
   const copySummary = async (section: "main" | "petty", text: string) => {
@@ -144,9 +169,9 @@ export function DailyCopySummary({ date, lineItems, totals, summary }: DailyCopy
             <div className="mb-5 overflow-hidden rounded-xl border border-indigo-100 bg-white">
               <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2.5">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Ticket details</span>
-                <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-bold text-indigo-700">{ticketDetails.length} tickets</span>
+                <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-bold text-indigo-700">{dailyBreakdown.tickets.length} tickets</span>
               </div>
-              {ticketDetails.length ? ticketDetails.map((item, index) => (
+              {dailyBreakdown.tickets.length ? dailyBreakdown.tickets.map((item, index) => (
                 <div key={`${item.label}-${index}`} className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3 last:border-0">
                   <span className="truncate font-mono text-sm font-semibold text-slate-700">{item.label}</span>
                   <strong className="shrink-0 tabular-nums text-slate-900">{money(item.value)}</strong>
@@ -155,12 +180,12 @@ export function DailyCopySummary({ date, lineItems, totals, summary }: DailyCopy
             </div>
 
             <div className="space-y-2">
-              <SummaryRow label="Total Ticket" value={money(totals.total_cash_received)} />
-              <SummaryRow label="Credit Card Paid" value={money(totals.total_pay_card)} />
-              <SummaryRow label="Amer/Tahseel Cost" value={money(totals.total_amer_cost)} />
-              <SummaryRow label="Net Income" value={money(totals.gross_profit)} />
+              <SummaryRow label="Total Net Ticket" value={money(dailyBreakdown.netTicket)} />
+              <SummaryRow label="Net Credit Card" value={money(dailyBreakdown.netCreditCard)} />
+              <SummaryRow label="Net Amer/Tahseel Cost" value={money(dailyBreakdown.netAmer)} />
+              <SummaryRow label="Net Income" value={money(netIncome)} />
               <SummaryRow label="Expense" value={money(summary.expenses)} />
-              <SummaryRow label="Total Amount" value={money(summary.total_amount)} icon={<ArrowDownToLine className="h-4 w-4" />} emphasis />
+              <SummaryRow label="Total Amount" value={money(dailyTotalAmount)} icon={<ArrowDownToLine className="h-4 w-4" />} emphasis />
             </div>
           </div>
         </article>
@@ -179,8 +204,8 @@ export function DailyCopySummary({ date, lineItems, totals, summary }: DailyCopy
               <div className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-700"><WalletCards className="h-4 w-4 text-emerald-600" />Cash position</div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-slate-500"><span>Current balance</span><strong className="text-slate-800">{money(summary.petty_cash.pre_balance)}</strong></div>
-                <div className="flex justify-between text-slate-500"><span>Total amount</span><strong className="text-slate-800">+ {money(summary.total_amount)}</strong></div>
-                <div className="flex items-end justify-between border-t border-dashed border-emerald-200 pt-4"><span className="font-bold text-emerald-800">Petty cash</span><strong className="text-xl font-black tabular-nums text-emerald-700">{money(summary.petty_cash.new_balance)}</strong></div>
+                <div className="flex justify-between text-slate-500"><span>Total amount</span><strong className="text-slate-800">+ {money(dailyTotalAmount)}</strong></div>
+                <div className="flex items-end justify-between border-t border-dashed border-emerald-200 pt-4"><span className="font-bold text-emerald-800">Petty cash</span><strong className="text-xl font-black tabular-nums text-emerald-700">{money(dailyPettyCash)}</strong></div>
               </div>
             </div>
 
@@ -188,8 +213,8 @@ export function DailyCopySummary({ date, lineItems, totals, summary }: DailyCopy
               <div className="mb-4 flex items-center gap-2 text-sm font-bold"><Building2 className="h-4 w-4 text-cyan-300" />Bank position</div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-slate-300"><span>Current bank balance</span><strong className="text-white">{money(summary.bank_balance.current_balance)}</strong></div>
-                <div className="flex justify-between text-slate-300"><span>Less petty cash</span><strong className="text-white">− {money(summary.petty_cash.new_balance)}</strong></div>
-                <div className="flex items-end justify-between border-t border-dashed border-slate-600 pt-4"><span className="font-bold">Net balance</span><strong className="text-xl font-black tabular-nums text-cyan-300">{money(summary.bank_balance.net_balance)}</strong></div>
+                <div className="flex justify-between text-slate-300"><span>Less petty cash</span><strong className="text-white">− {money(dailyPettyCash)}</strong></div>
+                <div className="flex items-end justify-between border-t border-dashed border-slate-600 pt-4"><span className="font-bold">Net balance</span><strong className="text-xl font-black tabular-nums text-cyan-300">{money(dailyNetBalance)}</strong></div>
               </div>
             </div>
             <p className="flex items-center justify-center gap-2 text-xs text-slate-400"><Landmark className="h-3.5 w-3.5" />All amounts shown in AED</p>

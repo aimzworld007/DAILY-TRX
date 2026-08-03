@@ -61,7 +61,7 @@ export default function SummaryPage() {
       </section>
 
       {!record && <p className="mt-5 rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-400">No saved transactions for this date. Summary values are shown as zero.</p>}
-      {record && <div className="mt-5"><DailyCopySummary date={selectedDate} lineItems={record.line_items || []} totals={totals} summary={summary}/></div>}
+      {record && <div className="mt-5"><DailyCopySummary date={selectedDate} lineItems={record.line_items || []} summary={summary}/></div>}
     </>}
   </PageShell>;
 }

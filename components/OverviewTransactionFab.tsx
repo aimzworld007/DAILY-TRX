@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Banknote, CreditCard, Globe2, Plus, Scale, WalletCards, X } from "lucide-react";
-import type { DailySummary, LineItem } from "@/types/financial";
+import { getTodayDateString, type DailySummary, type LineItem } from "@/types/financial";
 
 type TransactionType = "cash" | "amer" | "pay_card" | "portal";
 type EntryMode = "transaction" | "reconciliation";
@@ -13,7 +13,8 @@ export function OverviewTransactionFab({
 }: {
   onAdd: (
     item: Omit<LineItem, "id" | "sn" | "net_profit"> | null,
-    balances: { expenses: number; preBalance: number; currentBalance: number }
+    balances: { expenses: number; preBalance: number; currentBalance: number },
+    date: string
   ) => Promise<void>;
   summary: DailySummary;
 }) {
@@ -27,6 +28,7 @@ export function OverviewTransactionFab({
   const [preBalance, setPreBalance] = useState("");
   const [currentBalance, setCurrentBalance] = useState("");
   const [saving, setSaving] = useState(false);
+  const [entryDate, setEntryDate] = useState(getTodayDateString());
 
   useEffect(() => {
     if (!open) return;
@@ -42,6 +44,7 @@ export function OverviewTransactionFab({
   const currentAmount = Number(currentBalance) || 0;
 
   const openPopup = (nextMode: EntryMode) => {
+    setEntryDate(getTodayDateString());
     setExpenses(summary.expenses ? String(summary.expenses) : "");
     setPreBalance(summary.petty_cash.pre_balance ? String(summary.petty_cash.pre_balance) : "");
     setCurrentBalance(summary.bank_balance.current_balance ? String(summary.bank_balance.current_balance) : "");
@@ -61,7 +64,8 @@ export function OverviewTransactionFab({
         portal_cost: type === "portal" ? serviceCost : 0,
         category: type,
       } : null,
-      { expenses: expenseAmount, preBalance: previousAmount, currentBalance: currentAmount }
+      { expenses: expenseAmount, preBalance: previousAmount, currentBalance: currentAmount },
+      entryDate
     );
     setDescription("");
     setReceived("");
@@ -83,6 +87,10 @@ export function OverviewTransactionFab({
       <form onSubmit={submit} className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
         <header className="flex items-start justify-between bg-slate-900 px-5 py-4 text-white"><div><h2 id="overview-add-title" className="font-black">{mode === "transaction" ? "Entry transaction" : "Daily cash reconciliation"}</h2><p className="mt-1 text-xs text-slate-300">{mode === "transaction" ? "Enter today&apos;s transaction without leaving Overview." : "Update today&apos;s cash and bank balances."}</p></div><button type="button" onClick={() => setOpen(false)} aria-label="Close" className="rounded-lg p-1.5 hover:bg-white/10"><X className="h-5 w-5"/></button></header>
         <div className="space-y-4 p-5">
+          <label className="block text-xs font-extrabold uppercase text-slate-600">Entry date
+            <input type="date" required max={getTodayDateString()} value={entryDate} onChange={event => setEntryDate(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold normal-case outline-none focus:border-indigo-500"/>
+          </label>
+          {entryDate < getTodayDateString() && <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 text-xs font-bold text-amber-800">Warning: You are entering data for a previous date ({new Date(`${entryDate}T00:00:00`).toLocaleDateString()}). It will update that day&apos;s record.</div>}
           {mode === "transaction" ? <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{([ ["cash","Cash",Banknote], ["amer","Amer",WalletCards], ["pay_card","Pay Card",CreditCard], ["portal","Portal",Globe2] ] as const).map(([value,label,Icon]) => <button key={value} type="button" onClick={() => { setType(value); setCost(""); }} className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border-2 text-xs font-extrabold ${type === value ? "border-indigo-600 bg-indigo-50 text-indigo-800" : "border-slate-200 text-slate-600"}`}><Icon className="h-5 w-5"/>{label}</button>)}</div>
           <label className="block text-xs font-extrabold uppercase text-slate-600">Description<input autoFocus value={description} onChange={event => setDescription(event.target.value)} placeholder="Ticket or service description" className="mt-1.5 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-semibold normal-case outline-none focus:border-indigo-500"/></label>

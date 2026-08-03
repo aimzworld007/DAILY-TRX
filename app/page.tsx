@@ -41,17 +41,29 @@ export default function OverviewPage() {
   );
   const addTransaction = async (
     values: Omit<LineItem, "id" | "sn" | "net_profit"> | null,
-    balances: { expenses: number; preBalance: number; currentBalance: number }
+    balances: { expenses: number; preBalance: number; currentBalance: number },
+    entryDate: string
   ) => {
-    const lineItems = [...(record?.line_items || [])];
+    let targetRecord = entryDate === today ? record : null;
+    if (!targetRecord) {
+      try { const raw = localStorage.getItem(`dailytrax_record_${entryDate}`); targetRecord = raw ? JSON.parse(raw) as DailyRecord : null; } catch { /* ignore invalid cache */ }
+      try { targetRecord = await getDailyRecord(entryDate) || targetRecord; } catch { /* use local record */ }
+    }
+    const lineItems = [...(targetRecord?.line_items || [])];
     if (values) {
       lineItems.push({ ...values, id: `row_${Date.now()}`, sn: lineItems.length + 1, net_profit: calculateLineProfit(values) });
     }
     const nextTotals = calculateDailyTotals(lineItems);
-    const nextSummary = calculateDailySummary(nextTotals, balances.expenses, balances.preBalance, balances.currentBalance);
-    const nextRecord: DailyRecord = { date: today, line_items: lineItems, totals: nextTotals, summary: nextSummary, created_at: record?.created_at || new Date().toISOString(), updated_at: new Date().toISOString() };
-    setRecord(nextRecord);
-    localStorage.setItem(`dailytrax_record_${today}`, JSON.stringify(nextRecord));
+    const savedBalances = values && targetRecord?.summary ? {
+      expenses: targetRecord.summary.expenses,
+      preBalance: targetRecord.summary.petty_cash.pre_balance,
+      currentBalance: targetRecord.summary.bank_balance.current_balance,
+    } : balances;
+    const nextSummary = calculateDailySummary(nextTotals, savedBalances.expenses, savedBalances.preBalance, savedBalances.currentBalance);
+    const nextRecord: DailyRecord = { date: entryDate, line_items: lineItems, totals: nextTotals, summary: nextSummary, created_at: targetRecord?.created_at || new Date().toISOString(), updated_at: new Date().toISOString() };
+    if (entryDate === today) setRecord(nextRecord);
+    setRecent(current => [nextRecord, ...current.filter(item => item.date !== entryDate)].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 5));
+    localStorage.setItem(`dailytrax_record_${entryDate}`, JSON.stringify(nextRecord));
     try { await saveDailyRecord(nextRecord); } catch { /* The local copy is already saved for offline use. */ }
   };
   const ratio = useCallback((value: number) => totals.total_cash_received > 0 ? (value / totals.total_cash_received) * 100 : 0, [totals.total_cash_received]);
